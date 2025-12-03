@@ -10,11 +10,12 @@ powered by Supabase for backend services.
 
 **Key Details:**
 
-- **Framework:** React Native with Expo SDK 54
+- **Framework:** React Native with Expo SDK 52
 - **Language:** TypeScript
 - **Backend:** Supabase (authentication, database, storage)
-- **State Management:** TBD
-- **Navigation:** TBD
+- **State Management:** React Context API for auth state
+- **Navigation:** Expo Router (file-based routing)
+- **Auth:** Supabase Auth with email/password and Google OAuth
 - **CI/CD:** GitHub Actions with release workflow
 - **Linting:** Pre-commit hooks for code quality
 
@@ -24,8 +25,16 @@ powered by Supabase for backend services.
 mobile/
 ├── .expo/              # Expo build artifacts
 ├── .github/workflows/  # CI/CD workflows
+├── app/                # Expo Router app directory (file-based routing)
+│   ├── (auth)/         # Authentication screens (sign-in, sign-up)
+│   ├── (tabs)/         # Main app tab navigation
+│   ├── _layout.tsx     # Root layout with AuthProvider
+│   └── modal.tsx       # Example modal screen
 ├── assets/             # Images, fonts, and static assets
-├── App.tsx             # Main application entry point
+├── components/         # Reusable React components
+├── constants/          # App constants and theme
+├── contexts/           # React contexts (AuthContext)
+├── lib/                # Libraries and utilities (Supabase client)
 ├── app.json            # Expo configuration
 ├── package.json        # Dependencies and scripts
 └── tsconfig.json       # TypeScript configuration
@@ -43,8 +52,11 @@ mobile/
 
 Copy `.env.example` to `.env` and fill in Supabase credentials:
 
-- `SUPABASE_URL` - From Supabase dashboard
-- `SUPABASE_ANON_KEY` - From Supabase dashboard
+- `EXPO_PUBLIC_SUPABASE_URL` - From Supabase dashboard
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` - From Supabase dashboard
+
+**Note:** Expo requires the `EXPO_PUBLIC_` prefix for environment variables that
+need to be accessible in client-side code.
 
 ### Running the App
 
@@ -114,6 +126,42 @@ pre-commit autoupdate           # Update hook versions
 - Handle authentication state properly
 - Implement proper error handling for API calls
 
+### Authentication Architecture
+
+The app uses Supabase Auth with a React Context-based state management system:
+
+**Key Files:**
+
+- `lib/supabase.ts` - Supabase client configured with AsyncStorage for
+  persistence
+- `contexts/AuthContext.tsx` - Auth state management (session, user, loading)
+- `app/(auth)/sign-in.tsx` - Sign in screen (email/password + Google OAuth)
+- `app/(auth)/sign-up.tsx` - Sign up screen (email/password + Google OAuth)
+- `app/_layout.tsx` - Root layout with AuthProvider and protected route logic
+
+**How It Works:**
+
+1. **AuthProvider** wraps the entire app and manages auth state
+1. **useProtectedRoute** hook redirects users based on auth status:
+   - Not authenticated → redirect to sign-in
+   - Authenticated → redirect to main app
+1. **AsyncStorage** persists sessions across app restarts
+1. **Form validation** checks email format and password requirements
+1. **Google OAuth** opens system browser for authentication
+
+**Auth Flow:**
+
+```text
+App Start
+  ↓
+AuthProvider loads session from AsyncStorage
+  ↓
+useProtectedRoute checks user state
+  ↓
+┌─ Not authenticated → /(auth)/sign-in
+└─ Authenticated → /(tabs)
+```
+
 ## References
 
 - @README.md - Repository overview
@@ -123,7 +171,7 @@ pre-commit autoupdate           # Update hook versions
 
 ---
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-03
 
 This file should be updated whenever:
 
