@@ -41,16 +41,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Handle deep link OAuth callbacks
     const handleDeepLink = async (event: { url: string }) => {
-      if (event.url) {
-        const { data, error } = await supabase.auth.getSessionFromUrl({
-          url: event.url,
-        });
-        if (error) {
-          console.error('OAuth error:', error);
-        }
-        if (data?.session) {
-          setSession(data.session);
-          setUser(data.session.user);
+      if (event.url && event.url.includes('#access_token')) {
+        // Extract session from OAuth callback URL
+        const url = new URL(event.url);
+        const accessToken = url.hash.match(/access_token=([^&]+)/)?.[1];
+        const refreshToken = url.hash.match(/refresh_token=([^&]+)/)?.[1];
+
+        if (accessToken && refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) {
+            console.error('OAuth error:', error);
+          }
         }
       }
     };

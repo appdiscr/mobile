@@ -75,8 +75,7 @@ export default function SignUp() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'com.discr.app://',
-          skipBrowserRedirect: false,
+          skipBrowserRedirect: true,
         },
       });
 
@@ -86,14 +85,11 @@ export default function SignUp() {
       }
 
       if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
+        await WebBrowser.openAuthSessionAsync(
           data.url,
           'com.discr.app://'
         );
-
-        if (result.type === 'success') {
-          router.replace('/(tabs)');
-        }
+        // The deep link handler in AuthContext will process the callback
       }
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred');
@@ -114,7 +110,6 @@ export default function SignUp() {
         <View style={styles.content}>
           <View style={styles.logoContainer}>
             <Text style={styles.logo}>Discr</Text>
-            <Text style={styles.logoSubtext}>Discretion. Simplified.</Text>
           </View>
 
           <Text style={styles.title}>Create Account</Text>
@@ -248,12 +243,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.violet.primary,
     letterSpacing: -1,
-  },
-  logoSubtext: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-    fontStyle: 'italic',
   },
   title: {
     fontSize: 32,

@@ -1,6 +1,6 @@
-const violetPrimary = '#7c3aed';
-const violetLight = '#a78bfa';
-const violetDark = '#5b21b6';
+const violetPrimary = '#3b1877';
+const violetLight = '#5c2d91';
+const violetDark = '#2d1159';
 
 export default {
   light: {
