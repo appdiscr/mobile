@@ -1,6 +1,8 @@
-import { StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useAuth } from '@/contexts/AuthContext';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Colors from '@/constants/Colors';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -22,46 +24,168 @@ export default function ProfileScreen() {
     );
   };
 
+  const getInitials = (email: string) => {
+    return email.charAt(0).toUpperCase();
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getMemberSinceText = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
+    });
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
-      {user && (
-        <Text style={styles.email}>{user.email}</Text>
-      )}
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView style={styles.scrollView}>
+      <View style={styles.container}>
+        {/* Profile Photo */}
+        <View style={styles.photoContainer}>
+          <View style={styles.photoPlaceholder}>
+            {user?.email ? (
+              <Text style={styles.photoInitials}>{getInitials(user.email)}</Text>
+            ) : (
+              <FontAwesome name="user" size={48} color="#fff" />
+            )}
+          </View>
+        </View>
+
+        {/* User Info */}
+        {user && (
+          <View style={styles.infoContainer}>
+            <Text style={styles.email}>{user.email}</Text>
+            {user.created_at && (
+              <Text style={styles.memberSince}>
+                Member since {getMemberSinceText(user.created_at)}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* Account Details Section */}
+        {user?.created_at && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account Details</Text>
+            <View style={styles.detailRow}>
+              <FontAwesome name="calendar" size={16} color="#666" style={styles.detailIcon} />
+              <View style={styles.detailTextContainer}>
+                <Text style={styles.detailLabel}>Account Created</Text>
+                <Text style={styles.detailValue}>{formatDate(user.created_at)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Sign Out Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <FontAwesome name="sign-out" size={16} color="#fff" style={styles.buttonIcon} />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     padding: 20,
+    paddingTop: 40,
   },
-  title: {
-    fontSize: 24,
+  photoContainer: {
+    marginBottom: 20,
+  },
+  photoPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.violet.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoInitials: {
+    fontSize: 42,
     fontWeight: 'bold',
+    color: '#fff',
+  },
+  infoContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
   email: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  memberSince: {
     fontSize: 14,
     color: '#666',
-    marginTop: 8,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  section: {
+    width: '100%',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    color: '#666',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailIcon: {
+    marginRight: 12,
+  },
+  detailTextContainer: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  buttonContainer: {
+    width: '100%',
+    marginTop: 'auto',
+    paddingTop: 20,
   },
   signOutButton: {
     backgroundColor: '#ef4444',
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   signOutText: {
     color: '#fff',
