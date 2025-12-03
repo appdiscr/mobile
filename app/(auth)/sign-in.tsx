@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { validateSignInForm } from '@/lib/validation';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -21,24 +22,8 @@ export default function SignIn() {
     {}
   );
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-    }
-
+    const newErrors = validateSignInForm(email, password);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

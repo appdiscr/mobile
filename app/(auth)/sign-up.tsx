@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { validateSignUpForm } from '@/lib/validation';
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
@@ -25,36 +26,8 @@ export default function SignUp() {
     confirmPassword?: string;
   }>({});
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const validateForm = () => {
-    const newErrors: {
-      email?: string;
-      password?: string;
-      confirmPassword?: string;
-    } = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
+    const newErrors = validateSignUpForm(email, password, confirmPassword);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
