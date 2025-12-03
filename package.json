@@ -13,7 +13,9 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
     "collectCoverageFrom": [
       "app/**/*.{ts,tsx}",
       "contexts/**/*.{ts,tsx}",
@@ -38,6 +40,7 @@
     "@react-navigation/native": "^7.0.14",
     "@supabase/supabase-js": "^2.86.0",
     "expo": "~52.0.47",
+    "expo-auth-session": "^7.0.9",
     "expo-font": "~13.0.4",
     "expo-linking": "~7.0.5",
     "expo-router": "~4.0.21",

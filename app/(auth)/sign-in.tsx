@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import { supabase } from '@/lib/supabase';
 import { validateSignInForm } from '@/lib/validation';
 import Colors from '@/constants/Colors';
@@ -59,10 +60,17 @@ export default function SignIn() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      // Get the correct redirect URL for current environment
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: 'com.discr.app',
+      });
+
+      console.log('Using redirect URL:', redirectUrl);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'com.discr.app://',
+          redirectTo: redirectUrl,
           skipBrowserRedirect: true,
         },
       });
@@ -73,10 +81,7 @@ export default function SignIn() {
       }
 
       if (data?.url) {
-        await WebBrowser.openAuthSessionAsync(
-          data.url,
-          'com.discr.app://'
-        );
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         // The deep link handler in AuthContext will process the callback
       }
     } catch (error) {
