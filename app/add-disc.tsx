@@ -82,9 +82,8 @@ export default function AddDiscScreen() {
       };
 
       const requestBody = {
-        name: mold.trim(), // Use mold as the name
-        manufacturer: manufacturer.trim() || undefined,
         mold: mold.trim(),
+        manufacturer: manufacturer.trim() || undefined,
         plastic: plastic.trim() || undefined,
         weight: weight ? parseInt(weight, 10) : undefined,
         color: color.trim() || undefined,
