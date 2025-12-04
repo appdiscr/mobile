@@ -88,7 +88,7 @@ export default function AddDiscScreen() {
         weight: weight ? parseInt(weight, 10) : undefined,
         color: color.trim() || undefined,
         flight_numbers: flightNumbers,
-        reward_amount: rewardAmount ? Math.round(parseFloat(rewardAmount) * 100) : undefined, // Convert dollars to cents
+        reward_amount: rewardAmount ? parseFloat(rewardAmount) : undefined, // Send as dollars (decimal)
         notes: notes.trim() || undefined,
       };
 
