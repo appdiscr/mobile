@@ -1,0 +1,446 @@
+import { useState } from 'react';
+import {
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ActivityIndicator,
+  Pressable,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Text, View } from '@/components/Themed';
+import { supabase } from '@/lib/supabase';
+import Colors from '@/constants/Colors';
+
+interface FlightNumbers {
+  speed: number | null;
+  glide: number | null;
+  turn: number | null;
+  fade: number | null;
+}
+
+export default function AddDiscScreen() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  // Form fields
+  const [manufacturer, setManufacturer] = useState('');
+  const [mold, setMold] = useState('');
+  const [plastic, setPlastic] = useState('');
+  const [weight, setWeight] = useState('');
+  const [color, setColor] = useState('');
+  const [speed, setSpeed] = useState('');
+  const [glide, setGlide] = useState('');
+  const [turn, setTurn] = useState('');
+  const [fade, setFade] = useState('');
+  const [rewardAmount, setRewardAmount] = useState('');
+  const [notes, setNotes] = useState('');
+
+  // Validation errors
+  const [moldError, setMoldError] = useState('');
+
+  const validateForm = (): boolean => {
+    let isValid = true;
+
+    // Mold is required
+    if (!mold.trim()) {
+      setMoldError('Mold name is required');
+      isValid = false;
+    } else {
+      setMoldError('');
+    }
+
+    return isValid;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Get current session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        Alert.alert('Error', 'You must be signed in to add a disc');
+        return;
+      }
+
+      // Prepare flight numbers
+      const flightNumbers: FlightNumbers = {
+        speed: speed ? parseInt(speed, 10) : null,
+        glide: glide ? parseInt(glide, 10) : null,
+        turn: turn ? parseFloat(turn) : null,
+        fade: fade ? parseInt(fade, 10) : null,
+      };
+
+      const requestBody = {
+        mold: mold.trim(),
+        manufacturer: manufacturer.trim() || undefined,
+        plastic: plastic.trim() || undefined,
+        weight: weight ? parseInt(weight, 10) : undefined,
+        color: color.trim() || undefined,
+        flight_numbers: flightNumbers,
+        reward_amount: rewardAmount ? parseFloat(rewardAmount) : undefined, // Send as dollars (decimal)
+        notes: notes.trim() || undefined,
+      };
+
+      console.log('Creating disc with:', JSON.stringify(requestBody, null, 2));
+
+      // Call create-disc edge function
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-disc`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = JSON.stringify(data, null, 2);
+        console.error('❌ API Error Response:', errorMessage);
+        console.error('❌ Response status:', response.status);
+        Alert.alert(
+          'API Error',
+          `Status: ${response.status}\n\n${errorMessage}`,
+          [{ text: 'OK' }]
+        );
+        throw new Error(data.error || data.details || 'Failed to create disc');
+      }
+
+      Alert.alert('Success', 'Disc added to your bag!', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (error) {
+      console.error('Error creating disc:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to add disc');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={100}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.form}>
+          <Text style={styles.title}>Add Disc to Your Bag</Text>
+
+          {/* Mold - Required */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Mold <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={[styles.input, moldError ? styles.inputError : null]}
+              value={mold}
+              onChangeText={(text) => {
+                setMold(text);
+                if (moldError) setMoldError('');
+              }}
+              placeholder="e.g., Destroyer"
+              placeholderTextColor="#999"
+            />
+            {moldError ? <Text style={styles.errorText}>{moldError}</Text> : null}
+          </View>
+
+          {/* Manufacturer */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Manufacturer</Text>
+            <TextInput
+              style={styles.input}
+              value={manufacturer}
+              onChangeText={setManufacturer}
+              placeholder="e.g., Innova"
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Plastic */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Plastic</Text>
+            <TextInput
+              style={styles.input}
+              value={plastic}
+              onChangeText={setPlastic}
+              placeholder="e.g., Star"
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Weight */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Weight (grams)</Text>
+            <TextInput
+              style={styles.input}
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="e.g., 175"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+          </View>
+
+          {/* Color */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Color</Text>
+            <TextInput
+              style={styles.input}
+              value={color}
+              onChangeText={setColor}
+              placeholder="e.g., Red"
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Flight Numbers */}
+          <Text style={styles.sectionTitle}>Flight Numbers</Text>
+          <View style={styles.row}>
+            <View style={styles.fieldSmall}>
+              <Text style={styles.label}>Speed</Text>
+              <TextInput
+                style={styles.input}
+                value={speed}
+                onChangeText={setSpeed}
+                placeholder="1-15"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.fieldSmall}>
+              <Text style={styles.label}>Glide</Text>
+              <TextInput
+                style={styles.input}
+                value={glide}
+                onChangeText={setGlide}
+                placeholder="1-7"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.fieldSmall}>
+              <Text style={styles.label}>Turn</Text>
+              <TextInput
+                style={styles.input}
+                value={turn}
+                onChangeText={setTurn}
+                placeholder="-5 to 1"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.fieldSmall}>
+              <Text style={styles.label}>Fade</Text>
+              <TextInput
+                style={styles.input}
+                value={fade}
+                onChangeText={setFade}
+                placeholder="0-5"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Reward Amount */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Reward Amount</Text>
+            <View style={styles.inputWithPrefix}>
+              <Text style={styles.inputPrefix}>$</Text>
+              <TextInput
+                style={[styles.input, styles.inputWithPrefixText]}
+                value={rewardAmount}
+                onChangeText={(text) => {
+                  // Only allow numbers and decimal point
+                  const cleaned = text.replace(/[^0-9.]/g, '');
+                  // Only allow one decimal point
+                  const parts = cleaned.split('.');
+                  if (parts.length > 2) return;
+                  // Limit to 2 decimal places
+                  if (parts[1] && parts[1].length > 2) return;
+                  setRewardAmount(cleaned);
+                }}
+                placeholder="0.00"
+                placeholderTextColor="#999"
+                keyboardType="decimal-pad"
+              />
+            </View>
+          </View>
+
+          {/* Notes */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Notes</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Any additional notes about this disc..."
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Buttons */}
+          <View style={styles.buttonContainer}>
+            <Pressable
+              style={[styles.button, styles.buttonSecondary]}
+              onPress={() => router.back()}
+              disabled={loading}>
+              <Text style={styles.buttonSecondaryText}>Cancel</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.buttonPrimary, loading && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonPrimaryText}>Save Disc</Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+  },
+  form: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  field: {
+    marginBottom: 16,
+  },
+  fieldSmall: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  required: {
+    color: '#ff4444',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  inputError: {
+    borderColor: '#ff4444',
+  },
+  inputWithPrefix: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+  },
+  inputPrefix: {
+    fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 12,
+    color: '#666',
+  },
+  inputWithPrefixText: {
+    flex: 1,
+    borderWidth: 0,
+    paddingLeft: 4,
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 12,
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+    marginBottom: 40,
+  },
+  button: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonPrimary: {
+    backgroundColor: Colors.violet.primary,
+  },
+  buttonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.violet.primary,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonPrimaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonSecondaryText: {
+    color: Colors.violet.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
