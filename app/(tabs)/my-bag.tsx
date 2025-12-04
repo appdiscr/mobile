@@ -2,6 +2,7 @@ import { StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Colors from '@/constants/Colors';
 
 export default function MyBagScreen() {
   const router = useRouter();
@@ -46,7 +47,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#9333EA',
+    backgroundColor: Colors.violet.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import { supabase } from '@/lib/supabase';
+import Colors from '@/constants/Colors';
 
 interface FlightNumbers {
   speed: number | null;
@@ -25,7 +26,6 @@ export default function AddDiscScreen() {
   const [loading, setLoading] = useState(false);
 
   // Form fields
-  const [name, setName] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [mold, setMold] = useState('');
   const [plastic, setPlastic] = useState('');
@@ -39,17 +39,17 @@ export default function AddDiscScreen() {
   const [notes, setNotes] = useState('');
 
   // Validation errors
-  const [nameError, setNameError] = useState('');
+  const [moldError, setMoldError] = useState('');
 
   const validateForm = (): boolean => {
     let isValid = true;
 
-    // Name is required
-    if (!name.trim()) {
-      setNameError('Disc name is required');
+    // Mold is required
+    if (!mold.trim()) {
+      setMoldError('Mold name is required');
       isValid = false;
     } else {
-      setNameError('');
+      setMoldError('');
     }
 
     return isValid;
@@ -82,9 +82,9 @@ export default function AddDiscScreen() {
       };
 
       const requestBody = {
-        name: name.trim(),
+        name: mold.trim(), // Use mold as the name
         manufacturer: manufacturer.trim() || undefined,
-        mold: mold.trim() || undefined,
+        mold: mold.trim(),
         plastic: plastic.trim() || undefined,
         weight: weight ? parseInt(weight, 10) : undefined,
         color: color.trim() || undefined,
@@ -93,7 +93,7 @@ export default function AddDiscScreen() {
         notes: notes.trim() || undefined,
       };
 
-      console.log('Creating disc with:', requestBody);
+      console.log('Creating disc with:', JSON.stringify(requestBody, null, 2));
 
       // Call create-disc edge function
       const response = await fetch(
@@ -111,8 +111,14 @@ export default function AddDiscScreen() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('API Error Response:', data);
-        console.error('Response status:', response.status);
+        const errorMessage = JSON.stringify(data, null, 2);
+        console.error('❌ API Error Response:', errorMessage);
+        console.error('❌ Response status:', response.status);
+        Alert.alert(
+          'API Error',
+          `Status: ${response.status}\n\n${errorMessage}`,
+          [{ text: 'OK' }]
+        );
         throw new Error(data.error || data.details || 'Failed to create disc');
       }
 
@@ -139,22 +145,22 @@ export default function AddDiscScreen() {
         <View style={styles.form}>
           <Text style={styles.title}>Add Disc to Your Bag</Text>
 
-          {/* Name - Required */}
+          {/* Mold - Required */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Disc Name <Text style={styles.required}>*</Text>
+              Mold <Text style={styles.required}>*</Text>
             </Text>
             <TextInput
-              style={[styles.input, nameError ? styles.inputError : null]}
-              value={name}
+              style={[styles.input, moldError ? styles.inputError : null]}
+              value={mold}
               onChangeText={(text) => {
-                setName(text);
-                if (nameError) setNameError('');
+                setMold(text);
+                if (moldError) setMoldError('');
               }}
               placeholder="e.g., Destroyer"
               placeholderTextColor="#999"
             />
-            {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
+            {moldError ? <Text style={styles.errorText}>{moldError}</Text> : null}
           </View>
 
           {/* Manufacturer */}
@@ -165,18 +171,6 @@ export default function AddDiscScreen() {
               value={manufacturer}
               onChangeText={setManufacturer}
               placeholder="e.g., Innova"
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          {/* Mold */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Mold</Text>
-            <TextInput
-              style={styles.input}
-              value={mold}
-              onChangeText={setMold}
-              placeholder="e.g., Destroyer"
               placeholderTextColor="#999"
             />
           </View>
@@ -400,12 +394,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonPrimary: {
-    backgroundColor: '#9333EA',
+    backgroundColor: Colors.violet.primary,
   },
   buttonSecondary: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#9333EA',
+    borderColor: Colors.violet.primary,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -416,7 +410,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonSecondaryText: {
-    color: '#9333EA',
+    color: Colors.violet.primary,
     fontSize: 16,
     fontWeight: '600',
   },
