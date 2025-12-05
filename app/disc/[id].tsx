@@ -74,6 +74,15 @@ export default function DiscDetailScreen() {
       navigation.setOptions({
         title: disc.mold || disc.name,
         headerBackTitle: 'My Bag',
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/my-bag')}
+            activeOpacity={0.6}
+            style={{ marginLeft: 16, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <FontAwesome name="chevron-left" size={16} color={Colors.violet.primary} />
+            <Text style={{ color: Colors.violet.primary, fontSize: 17 }}>My Bag</Text>
+          </TouchableOpacity>
+        ),
         headerRight: () => (
           <TouchableOpacity
             onPress={() => router.push(`/edit-disc/${disc.id}`)}
@@ -84,7 +93,7 @@ export default function DiscDetailScreen() {
         ),
       });
     }
-  }, [disc, navigation]);
+  }, [disc, navigation, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -218,19 +227,26 @@ export default function DiscDetailScreen() {
     );
   }
 
+  // Filter out photos without valid URLs
+  const validPhotos = disc.photos.filter((photo) => photo.photo_url && photo.photo_url.trim() !== '');
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      {/* Photo Gallery */}
-      {disc.photos.length > 0 ? (
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          style={styles.photoGallery}>
-          {disc.photos.map((photo) => (
-            <Image key={photo.id} source={{ uri: photo.photo_url }} style={styles.photo} />
-          ))}
-        </ScrollView>
+      {/* Photo Gallery - Circular Display */}
+      {validPhotos.length > 0 ? (
+        <View style={styles.photoGalleryContainer}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.photoGallery}>
+            {validPhotos.map((photo) => (
+              <View key={photo.id} style={styles.photoWrapper}>
+                <Image source={{ uri: photo.photo_url }} style={styles.photo} />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
       ) : (
         <View style={styles.photoPlaceholder}>
           <FontAwesome name="circle-o" size={64} color="#ccc" />
@@ -239,11 +255,11 @@ export default function DiscDetailScreen() {
       )}
 
       {/* Photo indicator */}
-      {disc.photos.length > 1 && (
+      {validPhotos.length > 1 && (
         <View style={styles.photoIndicator}>
           <FontAwesome name="camera" size={12} color="#666" />
           <Text style={styles.photoIndicatorText}>
-            Swipe to see all {disc.photos.length} photos
+            Swipe to see photos
           </Text>
         </View>
       )}
@@ -401,12 +417,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  photoGalleryContainer: {
+    height: 320,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
   photoGallery: {
-    height: 300,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  photoWrapper: {
+    width: 280,
+    height: 280,
+    marginHorizontal: 10,
+    borderRadius: 140,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
   },
   photo: {
-    width: 375, // Standard phone width
-    height: 300,
+    width: 280,
+    height: 280,
     resizeMode: 'cover',
   },
   photoPlaceholder: {
