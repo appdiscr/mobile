@@ -25,6 +25,21 @@ export default function AddDiscScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  // Predefined color options
+  const COLOR_OPTIONS = [
+    { name: 'Red', hex: '#E74C3C' },
+    { name: 'Orange', hex: '#E67E22' },
+    { name: 'Yellow', hex: '#F1C40F' },
+    { name: 'Green', hex: '#2ECC71' },
+    { name: 'Blue', hex: '#3498DB' },
+    { name: 'Purple', hex: '#9B59B6' },
+    { name: 'Pink', hex: '#E91E63' },
+    { name: 'White', hex: '#ECF0F1' },
+    { name: 'Black', hex: '#2C3E50' },
+    { name: 'Gray', hex: '#95A5A6' },
+    { name: 'Multi', hex: 'rainbow' }, // Special rainbow indicator
+  ];
+
   // Form fields
   const [manufacturer, setManufacturer] = useState('');
   const [mold, setMold] = useState('');
@@ -202,13 +217,35 @@ export default function AddDiscScreen() {
           {/* Color */}
           <View style={styles.field}>
             <Text style={styles.label}>Color</Text>
-            <TextInput
-              style={styles.input}
-              value={color}
-              onChangeText={setColor}
-              placeholder="e.g., Red"
-              placeholderTextColor="#999"
-            />
+            <View style={styles.colorGrid}>
+              {COLOR_OPTIONS.map((colorOption) => (
+                <Pressable
+                  key={colorOption.name}
+                  style={[
+                    styles.colorOption,
+                    color === colorOption.name && styles.colorOptionSelected,
+                  ]}
+                  onPress={() => setColor(colorOption.name)}>
+                  {colorOption.hex === 'rainbow' ? (
+                    <View style={styles.rainbowCircle}>
+                      <View style={[styles.rainbowSlice, { backgroundColor: '#E74C3C' }]} />
+                      <View style={[styles.rainbowSlice, { backgroundColor: '#F1C40F' }]} />
+                      <View style={[styles.rainbowSlice, { backgroundColor: '#2ECC71' }]} />
+                      <View style={[styles.rainbowSlice, { backgroundColor: '#3498DB' }]} />
+                    </View>
+                  ) : (
+                    <View
+                      style={[
+                        styles.colorCircle,
+                        { backgroundColor: colorOption.hex },
+                        colorOption.name === 'White' && styles.colorCircleBorder,
+                      ]}
+                    />
+                  )}
+                  <Text style={styles.colorLabel}>{colorOption.name}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
           {/* Flight Numbers */}
@@ -399,6 +436,49 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 0,
     paddingLeft: 4,
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  colorOption: {
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    width: 70,
+  },
+  colorOptionSelected: {
+    borderColor: Colors.violet.primary,
+    backgroundColor: 'rgba(59, 24, 119, 0.1)',
+  },
+  colorCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginBottom: 4,
+  },
+  colorCircleBorder: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  rainbowCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  rainbowSlice: {
+    flex: 1,
+    height: '100%',
+  },
+  colorLabel: {
+    fontSize: 12,
+    textAlign: 'center',
   },
   textArea: {
     minHeight: 100,

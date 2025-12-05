@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   StyleSheet,
   Pressable,
@@ -8,7 +8,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
@@ -43,6 +43,21 @@ interface Disc {
   created_at: string;
   photos: DiscPhoto[];
 }
+
+// Color mapping with hex values
+const COLOR_MAP: Record<string, string> = {
+  Red: '#E74C3C',
+  Orange: '#E67E22',
+  Yellow: '#F1C40F',
+  Green: '#2ECC71',
+  Blue: '#3498DB',
+  Purple: '#9B59B6',
+  Pink: '#E91E63',
+  White: '#ECF0F1',
+  Black: '#2C3E50',
+  Gray: '#95A5A6',
+  Multi: 'rainbow',
+};
 
 export default function MyBagScreen() {
   const router = useRouter();
@@ -89,9 +104,11 @@ export default function MyBagScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchDiscs();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchDiscs();
+    }, [])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -123,22 +140,31 @@ export default function MyBagScreen() {
 
         {/* Disc Info */}
         <View style={styles.discInfo}>
-          <Text style={styles.discName}>{item.name}</Text>
-          {item.manufacturer && item.mold && (
-            <Text style={styles.discDetails}>
-              {item.manufacturer} • {item.mold}
-            </Text>
-          )}
+          <Text style={styles.discName}>{item.mold || item.name}</Text>
+          {item.manufacturer && <Text style={styles.discDetails}>{item.manufacturer}</Text>}
           {item.plastic && <Text style={styles.discMeta}>{item.plastic}</Text>}
           <View style={styles.discFooter}>
             {item.color && (
               <View style={styles.colorBadge}>
-                <View
-                  style={[
-                    styles.colorDot,
-                    { backgroundColor: item.color.toLowerCase() || '#666' },
-                  ]}
-                />
+                {COLOR_MAP[item.color] === 'rainbow' ? (
+                  <View style={styles.rainbowDot}>
+                    <View style={[styles.rainbowSlice, { backgroundColor: '#E74C3C' }]} />
+                    <View style={[styles.rainbowSlice, { backgroundColor: '#F1C40F' }]} />
+                    <View style={[styles.rainbowSlice, { backgroundColor: '#2ECC71' }]} />
+                    <View style={[styles.rainbowSlice, { backgroundColor: '#3498DB' }]} />
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.colorDot,
+                      {
+                        backgroundColor: COLOR_MAP[item.color] || '#666',
+                        borderColor:
+                          item.color === 'White' ? '#ccc' : 'rgba(0, 0, 0, 0.1)',
+                      },
+                    ]}
+                  />
+                )}
                 <Text style={styles.colorText}>{item.color}</Text>
               </View>
             )}
@@ -190,7 +216,7 @@ export default function MyBagScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
 
-      {/* Floating Add Button */}
+      {/* Floating Add Button - Always show when not in empty state */}
       {discs.length > 0 && (
         <Pressable style={styles.fab} onPress={() => router.push('/add-disc')}>
           <FontAwesome name="plus" size={24} color="#fff" />
@@ -275,7 +301,17 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  rainbowDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  rainbowSlice: {
+    flex: 1,
+    height: '100%',
   },
   colorText: {
     fontSize: 12,
