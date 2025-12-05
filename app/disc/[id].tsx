@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -8,7 +8,7 @@ import {
   Image,
   View as RNView,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
@@ -62,10 +62,26 @@ const COLOR_MAP: Record<string, string> = {
 
 export default function DiscDetailScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [disc, setDisc] = useState<Disc | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+
+  useLayoutEffect(() => {
+    if (disc) {
+      navigation.setOptions({
+        title: disc.mold || disc.name,
+        headerRight: () => (
+          <Pressable
+            onPress={() => router.push(`/edit-disc/${disc.id}`)}
+            style={{ marginRight: 8 }}>
+            <FontAwesome name="edit" size={20} color={Colors.violet.primary} />
+          </Pressable>
+        ),
+      });
+    }
+  }, [disc, navigation]);
 
   useEffect(() => {
     fetchDiscDetail();
