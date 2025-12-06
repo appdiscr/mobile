@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -9,14 +9,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 
-type ScreenState = 'input' | 'loading' | 'found' | 'reporting' | 'success' | 'error';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+type ScreenState = 'input' | 'scanning' | 'loading' | 'found' | 'reporting' | 'success' | 'error';
 
 interface DiscInfo {
   id: string;
@@ -39,6 +43,7 @@ interface RecoveryEvent {
 
 export default function FoundDiscScreen() {
   const router = useRouter();
+  const [permission, requestPermission] = useCameraPermissions();
   const [qrCode, setQrCode] = useState('');
   const [message, setMessage] = useState('');
   const [screenState, setScreenState] = useState<ScreenState>('input');
@@ -46,6 +51,78 @@ export default function FoundDiscScreen() {
   const [recoveryEvent, setRecoveryEvent] = useState<RecoveryEvent | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [hasActiveRecovery, setHasActiveRecovery] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
+
+  const startScanning = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert(
+          'Camera Permission Required',
+          'Please grant camera permission to scan QR codes.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+    setHasScanned(false);
+    setScreenState('scanning');
+  };
+
+  const handleBarcodeScan = (result: BarcodeScanningResult) => {
+    if (hasScanned) return;
+    setHasScanned(true);
+    const scannedCode = result.data;
+    setQrCode(scannedCode);
+    setScreenState('input');
+    // Auto-lookup after scanning
+    lookupQrCodeWithValue(scannedCode);
+  };
+
+  const lookupQrCodeWithValue = async (code: string) => {
+    if (!code.trim()) {
+      Alert.alert('Error', 'Please enter a QR code');
+      return;
+    }
+
+    setScreenState('loading');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/lookup-qr-code?code=${encodeURIComponent(code.trim())}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!data.found) {
+        setErrorMessage('No disc found with this QR code. Please check and try again.');
+        setScreenState('error');
+        return;
+      }
+
+      setDiscInfo(data.disc);
+      setHasActiveRecovery(data.has_active_recovery);
+
+      if (data.has_active_recovery) {
+        setErrorMessage('This disc already has an active recovery in progress.');
+        setScreenState('error');
+        return;
+      }
+
+      setScreenState('found');
+    } catch (error) {
+      console.error('Lookup error:', error);
+      setErrorMessage('Failed to look up disc. Please try again.');
+      setScreenState('error');
+    }
+  };
 
   const lookupQrCode = async () => {
     if (!qrCode.trim()) {
@@ -168,18 +245,30 @@ export default function FoundDiscScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <FontAwesome name="search" size={48} color={Colors.violet.primary} />
+            <FontAwesome name="qrcode" size={48} color={Colors.violet.primary} />
             <Text style={styles.title}>Found a Disc?</Text>
             <Text style={styles.subtitle}>
-              Enter the QR code from the disc to help reunite it with its owner.
+              Scan the QR code or enter it manually to help reunite the disc with its owner.
             </Text>
+          </View>
+
+          {/* Scan QR Code Button */}
+          <Pressable style={styles.primaryButton} onPress={startScanning}>
+            <FontAwesome name="camera" size={18} color="#fff" />
+            <Text style={styles.primaryButtonText}>Scan QR Code</Text>
+          </Pressable>
+
+          <View style={styles.orDivider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.orText}>or enter manually</Text>
+            <View style={styles.dividerLine} />
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>QR Code</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter code (e.g., ABC123)"
+              placeholder="Enter code (e.g., TEST001)"
               placeholderTextColor="#999"
               value={qrCode}
               onChangeText={setQrCode}
@@ -188,12 +277,45 @@ export default function FoundDiscScreen() {
             />
           </View>
 
-          <Pressable style={styles.primaryButton} onPress={lookupQrCode}>
-            <FontAwesome name="search" size={18} color="#fff" />
-            <Text style={styles.primaryButtonText}>Look Up Disc</Text>
+          <Pressable style={styles.secondaryButton} onPress={lookupQrCode}>
+            <FontAwesome name="search" size={18} color={Colors.violet.primary} />
+            <Text style={styles.secondaryButtonText}>Look Up Disc</Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
+    );
+  }
+
+  // Scanning State
+  if (screenState === 'scanning') {
+    return (
+      <View style={styles.scannerContainer}>
+        <CameraView
+          style={styles.camera}
+          facing="back"
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr'],
+          }}
+          onBarcodeScanned={handleBarcodeScan}
+        />
+        <View style={styles.scannerOverlay}>
+          <View style={styles.scannerHeader}>
+            <Text style={styles.scannerTitle}>Scan QR Code</Text>
+            <Text style={styles.scannerSubtitle}>
+              Point your camera at the QR code on the disc
+            </Text>
+          </View>
+          <View style={styles.scannerFrame}>
+            <View style={[styles.cornerBorder, styles.topLeft]} />
+            <View style={[styles.cornerBorder, styles.topRight]} />
+            <View style={[styles.cornerBorder, styles.bottomLeft]} />
+            <View style={[styles.cornerBorder, styles.bottomRight]} />
+          </View>
+          <Pressable style={styles.cancelScanButton} onPress={() => setScreenState('input')}>
+            <Text style={styles.cancelScanText}>Cancel</Text>
+          </Pressable>
+        </View>
+      </View>
     );
   }
 
@@ -516,5 +638,104 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 32,
     paddingHorizontal: 20,
+  },
+  orDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  orText: {
+    color: '#999',
+    fontSize: 14,
+    paddingHorizontal: 16,
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  scannerHeader: {
+    alignItems: 'center',
+  },
+  scannerTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  scannerSubtitle: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  scannerFrame: {
+    width: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.7,
+    position: 'relative',
+  },
+  cornerBorder: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderColor: Colors.violet.primary,
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 8,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: 8,
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: 8,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 8,
+  },
+  cancelScanButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+  },
+  cancelScanText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
