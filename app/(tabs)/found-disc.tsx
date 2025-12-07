@@ -10,10 +10,11 @@ import {
   Platform,
   Alert,
   Dimensions,
+  View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
-import { Text, View } from '@/components/Themed';
+import { Text } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
@@ -288,15 +289,35 @@ export default function FoundDiscScreen() {
 
   // Scanning State
   if (screenState === 'scanning') {
+    // Double-check permission before rendering camera
+    if (!permission?.granted) {
+      return (
+        <View style={styles.centerContainer}>
+          <FontAwesome name="camera" size={48} color="#ccc" />
+          <Text style={styles.errorTitle}>Camera Permission Required</Text>
+          <Text style={styles.errorMessage}>
+            Please grant camera permission to scan QR codes.
+          </Text>
+          <Pressable style={styles.primaryButton} onPress={requestPermission}>
+            <Text style={styles.primaryButtonText}>Grant Permission</Text>
+          </Pressable>
+          <Pressable style={styles.textButton} onPress={() => setScreenState('input')}>
+            <Text style={styles.textButtonText}>Cancel</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.scannerContainer}>
         <CameraView
           style={styles.camera}
           facing="back"
+          active={true}
           barcodeScannerSettings={{
             barcodeTypes: ['qr'],
           }}
-          onBarcodeScanned={handleBarcodeScan}
+          onBarcodeScanned={hasScanned ? undefined : handleBarcodeScan}
         />
         <View style={styles.scannerOverlay}>
           <View style={styles.scannerHeader}>
@@ -444,16 +465,19 @@ export default function FoundDiscScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+    backgroundColor: '#fff',
   },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
   header: {
     alignItems: 'center',
@@ -559,6 +583,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eee',
     marginBottom: 24,
+    backgroundColor: '#fff',
   },
   discPhoto: {
     width: 120,
