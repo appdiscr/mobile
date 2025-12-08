@@ -58,20 +58,24 @@ export default function NotificationsScreen() {
     if (!session?.access_token) return;
 
     try {
-      const response = await supabase.functions.invoke('get-notifications', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/get-notifications`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
 
-      if (response.error) {
-        console.error('Failed to fetch notifications:', response.error);
+      if (!response.ok) {
+        console.error('Failed to fetch notifications:', response.status);
         return;
       }
 
-      setNotifications(response.data.notifications || []);
-      setUnreadCount(response.data.unread_count || 0);
+      const data = await response.json();
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unread_count || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {

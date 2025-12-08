@@ -7,7 +7,6 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: { name: React.ComponentProps<typeof FontAwesome>['name']; color: string }) {
@@ -44,15 +43,19 @@ export default function TabLayout() {
     if (!session?.access_token) return;
 
     try {
-      const response = await supabase.functions.invoke('get-notifications?limit=1', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/get-notifications?limit=1`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
 
-      if (!response.error && response.data) {
-        setUnreadCount(response.data.unread_count || 0);
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unread_count || 0);
       }
     } catch (error) {
       console.error('Error fetching unread count:', error);
