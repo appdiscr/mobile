@@ -434,7 +434,7 @@ export default function RecoveryDetailScreen() {
             <FontAwesome name="check-circle" size={18} color="#2ECC71" />{' '}
             {recovery.status === 'recovered' ? 'Meetup Completed' : 'Confirmed Meetup'}
           </Text>
-          <RNView style={styles.meetupDetails}>
+          <RNView style={[styles.meetupDetails, recovery.status === 'recovered' && { marginBottom: 0 }]}>
             <RNView style={styles.meetupRow}>
               <FontAwesome name="map-marker" size={16} color="#666" />
               <Text style={styles.meetupText}>{acceptedProposal.location_name}</Text>
