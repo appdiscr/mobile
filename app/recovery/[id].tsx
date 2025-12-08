@@ -327,12 +327,12 @@ export default function RecoveryDetailScreen() {
               )}
             </Pressable>
             <Pressable
-              style={[styles.declineButton, actionLoading && styles.buttonDisabled]}
+              style={[styles.counterButton, actionLoading && styles.buttonDisabled]}
               onPress={() => handleDeclineMeetup(pendingProposal.id)}
               disabled={actionLoading}
             >
-              <FontAwesome name="times" size={16} color="#E74C3C" />
-              <Text style={styles.declineButtonText}>Decline</Text>
+              <FontAwesome name="refresh" size={16} color={Colors.violet.primary} />
+              <Text style={styles.counterButtonText}>Counter</Text>
             </Pressable>
           </RNView>
         </RNView>
@@ -716,19 +716,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  declineButton: {
+  counterButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     borderWidth: 2,
-    borderColor: '#E74C3C',
+    borderColor: Colors.violet.primary,
     paddingVertical: 12,
     borderRadius: 10,
   },
-  declineButtonText: {
-    color: '#E74C3C',
+  counterButtonText: {
+    color: Colors.violet.primary,
     fontSize: 16,
     fontWeight: '600',
   },
