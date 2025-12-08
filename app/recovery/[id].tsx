@@ -292,6 +292,80 @@ export default function RecoveryDetailScreen() {
         <Text style={styles.statusText}>{statusInfo.label}</Text>
       </View>
 
+      {/* Pending Proposal - shown to person who can respond (didn't propose) */}
+      {canRespondToProposal && (
+        <RNView style={[styles.section, styles.pendingSection]}>
+          <Text style={styles.sectionTitle}>
+            <FontAwesome name="clock-o" size={18} color="#F39C12" /> Pending Meetup Proposal
+          </Text>
+          <RNView style={styles.meetupDetails}>
+            <RNView style={styles.meetupRow}>
+              <FontAwesome name="map-marker" size={16} color="#666" />
+              <Text style={styles.meetupText}>{pendingProposal.location_name}</Text>
+            </RNView>
+            <RNView style={styles.meetupRow}>
+              <FontAwesome name="calendar" size={16} color="#666" />
+              <Text style={styles.meetupText}>{formatDate(pendingProposal.proposed_datetime)}</Text>
+            </RNView>
+            {pendingProposal.message && (
+              <Text style={styles.proposalMessage}>{pendingProposal.message}</Text>
+            )}
+          </RNView>
+          <RNView style={styles.actionButtons}>
+            <Pressable
+              style={[styles.acceptButton, actionLoading && styles.buttonDisabled]}
+              onPress={() => handleAcceptMeetup(pendingProposal.id)}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <FontAwesome name="check" size={16} color="#fff" />
+                  <Text style={styles.acceptButtonText}>Accept</Text>
+                </>
+              )}
+            </Pressable>
+            <Pressable
+              style={[styles.declineButton, actionLoading && styles.buttonDisabled]}
+              onPress={() => handleDeclineMeetup(pendingProposal.id)}
+              disabled={actionLoading}
+            >
+              <FontAwesome name="times" size={16} color="#E74C3C" />
+              <Text style={styles.declineButtonText}>Decline</Text>
+            </Pressable>
+          </RNView>
+        </RNView>
+      )}
+
+      {/* Waiting for response - shown to person who proposed */}
+      {pendingProposal && userProposedMeetup && (
+        <View style={[styles.section, styles.pendingSection]}>
+          <Text style={styles.sectionTitle}>
+            <FontAwesome name="clock-o" size={18} color="#F39C12" /> Your Meetup Proposal
+          </Text>
+          <RNView style={styles.meetupDetails}>
+            <RNView style={styles.meetupRow}>
+              <FontAwesome name="map-marker" size={16} color="#666" />
+              <Text style={styles.meetupText}>{pendingProposal.location_name}</Text>
+            </RNView>
+            <RNView style={styles.meetupRow}>
+              <FontAwesome name="calendar" size={16} color="#666" />
+              <Text style={styles.meetupText}>{formatDate(pendingProposal.proposed_datetime)}</Text>
+            </RNView>
+            {pendingProposal.message && (
+              <Text style={styles.proposalMessage}>{pendingProposal.message}</Text>
+            )}
+          </RNView>
+          <View style={styles.waitingRow}>
+            <FontAwesome name="clock-o" size={20} color="#F39C12" />
+            <Text style={styles.waitingText}>
+              Waiting for {isOwner ? 'the finder' : 'the owner'} to respond
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Disc Card */}
       <View style={[styles.discCard, { borderColor: isDark ? '#444' : '#eee', backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
         {recovery.disc?.photo_url ? (
@@ -404,52 +478,6 @@ export default function RecoveryDetailScreen() {
         </RNView>
       )}
 
-      {/* Pending Proposal - shown to person who can respond (didn't propose) */}
-      {canRespondToProposal && (
-        <RNView style={[styles.section, styles.pendingSection]}>
-          <Text style={styles.sectionTitle}>
-            <FontAwesome name="clock-o" size={18} color="#F39C12" /> Pending Meetup Proposal
-          </Text>
-          <RNView style={styles.meetupDetails}>
-            <RNView style={styles.meetupRow}>
-              <FontAwesome name="map-marker" size={16} color="#666" />
-              <Text style={styles.meetupText}>{pendingProposal.location_name}</Text>
-            </RNView>
-            <RNView style={styles.meetupRow}>
-              <FontAwesome name="calendar" size={16} color="#666" />
-              <Text style={styles.meetupText}>{formatDate(pendingProposal.proposed_datetime)}</Text>
-            </RNView>
-            {pendingProposal.message && (
-              <Text style={styles.proposalMessage}>{pendingProposal.message}</Text>
-            )}
-          </RNView>
-          <RNView style={styles.actionButtons}>
-            <Pressable
-              style={[styles.acceptButton, actionLoading && styles.buttonDisabled]}
-              onPress={() => handleAcceptMeetup(pendingProposal.id)}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <FontAwesome name="check" size={16} color="#fff" />
-                  <Text style={styles.acceptButtonText}>Accept</Text>
-                </>
-              )}
-            </Pressable>
-            <Pressable
-              style={[styles.declineButton, actionLoading && styles.buttonDisabled]}
-              onPress={() => handleDeclineMeetup(pendingProposal.id)}
-              disabled={actionLoading}
-            >
-              <FontAwesome name="times" size={16} color="#E74C3C" />
-              <Text style={styles.declineButtonText}>Decline</Text>
-            </Pressable>
-          </RNView>
-        </RNView>
-      )}
-
       {/* Propose Meetup button - available to both owner and finder when status is 'found' */}
       {recovery.status === 'found' && (
         <Pressable
@@ -459,31 +487,6 @@ export default function RecoveryDetailScreen() {
           <FontAwesome name="calendar-plus-o" size={18} color="#fff" />
           <Text style={styles.primaryButtonText}>Propose a Meetup</Text>
         </Pressable>
-      )}
-
-      {/* Waiting for response - shown to person who proposed */}
-      {pendingProposal && userProposedMeetup && (
-        <View style={[styles.section, { borderColor: isDark ? '#444' : '#eee', backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-          <RNView style={styles.meetupDetails}>
-            <RNView style={styles.meetupRow}>
-              <FontAwesome name="map-marker" size={16} color="#666" />
-              <Text style={styles.meetupText}>{pendingProposal.location_name}</Text>
-            </RNView>
-            <RNView style={styles.meetupRow}>
-              <FontAwesome name="calendar" size={16} color="#666" />
-              <Text style={styles.meetupText}>{formatDate(pendingProposal.proposed_datetime)}</Text>
-            </RNView>
-            {pendingProposal.message && (
-              <Text style={styles.proposalMessage}>{pendingProposal.message}</Text>
-            )}
-          </RNView>
-          <View style={styles.waitingRow}>
-            <FontAwesome name="clock-o" size={20} color="#F39C12" />
-            <Text style={styles.waitingText}>
-              Waiting for {isOwner ? 'the finder' : 'the owner'} to respond to your meetup proposal
-            </Text>
-          </View>
-        </View>
       )}
 
       {/* Recovery Complete */}
