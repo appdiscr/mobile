@@ -703,6 +703,7 @@ const styles = StyleSheet.create({
   },
   acceptButton: {
     flex: 1,
+    flexBasis: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -718,6 +719,7 @@ const styles = StyleSheet.create({
   },
   counterButton: {
     flex: 1,
+    flexBasis: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
