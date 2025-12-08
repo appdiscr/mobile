@@ -1051,7 +1051,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(243, 156, 18, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(243, 156, 18, 0.4)',
     marginBottom: 8,
   },
   ownerRecoveryInfo: {
