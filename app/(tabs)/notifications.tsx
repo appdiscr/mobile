@@ -225,11 +225,15 @@ export default function NotificationsScreen() {
 
     return (
       <RNView style={styles.swipeContainer}>
-        {/* Delete background */}
-        <RNView style={styles.deleteBackground}>
+        {/* Delete background - tappable to dismiss */}
+        <TouchableOpacity
+          style={styles.deleteBackground}
+          onPress={() => dismissNotification(item.id, !item.read)}
+          activeOpacity={0.8}
+        >
           <FontAwesome name="trash" size={20} color="#fff" />
           <Text style={styles.deleteText}>Dismiss</Text>
-        </RNView>
+        </TouchableOpacity>
 
         {/* Notification content */}
         <Animated.View
