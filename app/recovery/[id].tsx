@@ -331,6 +331,17 @@ export default function RecoveryDetailScreen() {
         <Text style={styles.statusText}>{statusInfo.label}</Text>
       </View>
 
+      {/* Recovery Complete - shown at top when disc is recovered */}
+      {recovery.status === 'recovered' && (
+        <RNView style={[styles.section, styles.recoveredSection]}>
+          <FontAwesome name="trophy" size={48} color="#F1C40F" />
+          <Text style={styles.recoveredTitle}>Disc Recovered!</Text>
+          <Text style={styles.recoveredText}>
+            This disc was successfully returned on {formatDate(recovery.recovered_at || recovery.updated_at)}
+          </Text>
+        </RNView>
+      )}
+
       {/* Pending Proposal - shown to person who can respond (didn't propose) */}
       {canRespondToProposal && (
         <RNView style={[styles.section, styles.pendingSection]}>
@@ -537,16 +548,6 @@ export default function RecoveryDetailScreen() {
         </Pressable>
       )}
 
-      {/* Recovery Complete */}
-      {recovery.status === 'recovered' && (
-        <View style={[styles.section, styles.recoveredSection]}>
-          <FontAwesome name="trophy" size={48} color="#F1C40F" />
-          <Text style={styles.recoveredTitle}>Disc Recovered!</Text>
-          <Text style={styles.recoveredText}>
-            This disc was successfully returned on {formatDate(recovery.recovered_at || recovery.updated_at)}
-          </Text>
-        </View>
-      )}
     </ScrollView>
   );
 }
