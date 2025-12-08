@@ -114,6 +114,45 @@ export default function RecoveryDetailScreen() {
     fetchRecoveryDetails();
   }, [fetchRecoveryDetails]);
 
+  // Subscribe to real-time updates for this recovery event
+  useEffect(() => {
+    if (!recoveryId) return;
+
+    const channel = supabase
+      .channel(`recovery-${recoveryId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'recovery_events',
+          filter: `id=eq.${recoveryId}`,
+        },
+        () => {
+          // Refetch when the recovery event is updated
+          fetchRecoveryDetails();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'meetup_proposals',
+          filter: `recovery_event_id=eq.${recoveryId}`,
+        },
+        () => {
+          // Refetch when meetup proposals change
+          fetchRecoveryDetails();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [recoveryId, fetchRecoveryDetails]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchRecoveryDetails();
@@ -366,6 +405,51 @@ export default function RecoveryDetailScreen() {
         </RNView>
       )}
 
+      {/* Confirmed Meetup - shown at top when meetup is accepted */}
+      {acceptedProposal && (
+        <RNView style={[styles.section, styles.acceptedSection]}>
+          <Text style={styles.sectionTitle}>
+            <FontAwesome name="check-circle" size={18} color="#2ECC71" /> Confirmed Meetup
+          </Text>
+          <RNView style={styles.meetupDetails}>
+            <RNView style={styles.meetupRow}>
+              <FontAwesome name="map-marker" size={16} color="#666" />
+              <Text style={styles.meetupText}>{acceptedProposal.location_name}</Text>
+            </RNView>
+            <RNView style={styles.meetupRow}>
+              <FontAwesome name="calendar" size={16} color="#666" />
+              <Text style={styles.meetupText}>{formatDate(acceptedProposal.proposed_datetime)}</Text>
+            </RNView>
+            {acceptedProposal.message && (
+              <Text style={styles.proposalMessage}>{acceptedProposal.message}</Text>
+            )}
+          </RNView>
+          <Pressable
+            style={styles.directionsButton}
+            onPress={() => handleGetDirections(acceptedProposal)}
+          >
+            <FontAwesome name="location-arrow" size={16} color="#fff" />
+            <Text style={styles.directionsButtonText}>Get Directions</Text>
+          </Pressable>
+          {isOwner && recovery.status === 'meetup_confirmed' && (
+            <Pressable
+              style={[styles.primaryButton, { marginTop: 12 }]}
+              onPress={handleCompleteRecovery}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <FontAwesome name="check" size={18} color="#fff" />
+                  <Text style={styles.primaryButtonText}>Mark as Recovered</Text>
+                </>
+              )}
+            </Pressable>
+          )}
+        </RNView>
+      )}
+
       {/* Disc Card */}
       <View style={[styles.discCard, { borderColor: isDark ? '#444' : '#eee', backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
         {recovery.disc?.photo_url ? (
@@ -431,51 +515,6 @@ export default function RecoveryDetailScreen() {
           <Text style={styles.messageText}>{recovery.finder_message}</Text>
           <Text style={styles.timestamp}>Found {formatDate(recovery.found_at)}</Text>
         </View>
-      )}
-
-      {/* Accepted Meetup */}
-      {acceptedProposal && (
-        <RNView style={[styles.section, styles.acceptedSection]}>
-          <Text style={styles.sectionTitle}>
-            <FontAwesome name="check-circle" size={18} color="#2ECC71" /> Confirmed Meetup
-          </Text>
-          <RNView style={styles.meetupDetails}>
-            <RNView style={styles.meetupRow}>
-              <FontAwesome name="map-marker" size={16} color="#666" />
-              <Text style={styles.meetupText}>{acceptedProposal.location_name}</Text>
-            </RNView>
-            <RNView style={styles.meetupRow}>
-              <FontAwesome name="calendar" size={16} color="#666" />
-              <Text style={styles.meetupText}>{formatDate(acceptedProposal.proposed_datetime)}</Text>
-            </RNView>
-            {acceptedProposal.message && (
-              <Text style={styles.proposalMessage}>{acceptedProposal.message}</Text>
-            )}
-          </RNView>
-          <Pressable
-            style={styles.directionsButton}
-            onPress={() => handleGetDirections(acceptedProposal)}
-          >
-            <FontAwesome name="location-arrow" size={16} color="#fff" />
-            <Text style={styles.directionsButtonText}>Get Directions</Text>
-          </Pressable>
-          {isOwner && recovery.status === 'meetup_confirmed' && (
-            <Pressable
-              style={[styles.primaryButton, { marginTop: 12 }]}
-              onPress={handleCompleteRecovery}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <FontAwesome name="check" size={18} color="#fff" />
-                  <Text style={styles.primaryButtonText}>Mark as Recovered</Text>
-                </>
-              )}
-            </Pressable>
-          )}
-        </RNView>
       )}
 
       {/* Propose Meetup button - available to both owner and finder when status is 'found' */}
