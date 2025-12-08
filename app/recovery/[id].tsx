@@ -340,7 +340,7 @@ export default function RecoveryDetailScreen() {
 
       {/* Waiting for response - shown to person who proposed */}
       {pendingProposal && userProposedMeetup && (
-        <View style={[styles.section, styles.pendingSection]}>
+        <RNView style={[styles.section, styles.pendingSection]}>
           <Text style={styles.sectionTitle}>
             <FontAwesome name="clock-o" size={18} color="#F39C12" /> Your Meetup Proposal
           </Text>
@@ -357,13 +357,13 @@ export default function RecoveryDetailScreen() {
               <Text style={styles.proposalMessage}>{pendingProposal.message}</Text>
             )}
           </RNView>
-          <View style={styles.waitingRow}>
+          <RNView style={styles.waitingRow}>
             <FontAwesome name="clock-o" size={20} color="#F39C12" />
             <Text style={styles.waitingText}>
               Waiting for {isOwner ? 'the finder' : 'the owner'} to respond
             </Text>
-          </View>
-        </View>
+          </RNView>
+        </RNView>
       )}
 
       {/* Disc Card */}
