@@ -19,7 +19,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 
 interface Notification {
   id: string;
-  type: 'disc_found' | 'meetup_proposed' | 'meetup_accepted' | 'meetup_declined' | 'disc_recovered';
+  type: 'disc_found' | 'meetup_proposed' | 'meetup_accepted' | 'meetup_declined' | 'disc_recovered' | 'disc_surrendered';
   title: string;
   body: string;
   data: {
@@ -37,6 +37,7 @@ const NOTIFICATION_ICONS: Record<string, React.ComponentProps<typeof FontAwesome
   meetup_accepted: 'check-circle',
   meetup_declined: 'times-circle',
   disc_recovered: 'trophy',
+  disc_surrendered: 'gift',
 };
 
 const NOTIFICATION_COLORS: Record<string, string> = {
@@ -45,6 +46,7 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   meetup_accepted: '#27AE60',
   meetup_declined: '#E74C3C',
   disc_recovered: '#10b981',
+  disc_surrendered: '#9B59B6',
 };
 
 export default function NotificationsScreen() {

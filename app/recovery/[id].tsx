@@ -32,10 +32,11 @@ interface MeetupProposal {
 
 interface RecoveryDetails {
   id: string;
-  status: 'found' | 'meetup_proposed' | 'meetup_confirmed' | 'recovered' | 'cancelled';
+  status: 'found' | 'meetup_proposed' | 'meetup_confirmed' | 'recovered' | 'cancelled' | 'surrendered';
   finder_message?: string;
   found_at: string;
   recovered_at?: string;
+  surrendered_at?: string;
   created_at: string;
   updated_at: string;
   user_role: 'owner' | 'finder';
@@ -249,6 +250,55 @@ export default function RecoveryDetailScreen() {
     );
   };
 
+  const handleSurrenderDisc = async () => {
+    const finderName = recovery?.finder.display_name || 'the finder';
+    const discName = recovery?.disc?.name || 'this disc';
+
+    Alert.alert(
+      'Surrender Disc?',
+      `This will permanently transfer ownership of ${discName} to ${finderName}. This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Surrender',
+          style: 'destructive',
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) throw new Error('Not authenticated');
+
+              const response = await fetch(
+                `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/surrender-disc`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                  },
+                  body: JSON.stringify({ recovery_event_id: recoveryId }),
+                }
+              );
+
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.error || 'Failed to surrender disc');
+
+              Alert.alert(
+                'Disc Surrendered',
+                `${discName} has been transferred to ${finderName}. It will now appear in their collection.`,
+                [{ text: 'OK', onPress: () => router.replace('/') }]
+              );
+            } catch (err) {
+              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to surrender disc');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleGetDirections = (proposal: MeetupProposal) => {
     if (proposal.latitude && proposal.longitude) {
       const url = `https://maps.google.com/?q=${proposal.latitude},${proposal.longitude}`;
@@ -282,6 +332,8 @@ export default function RecoveryDetailScreen() {
         return { label: 'Recovered', color: '#27AE60', icon: 'check' as const };
       case 'cancelled':
         return { label: 'Cancelled', color: '#E74C3C', icon: 'times' as const };
+      case 'surrendered':
+        return { label: 'Surrendered', color: '#9B59B6', icon: 'gift' as const };
       default:
         return { label: status, color: '#95A5A6', icon: 'question' as const };
     }
@@ -319,6 +371,9 @@ export default function RecoveryDetailScreen() {
   const userProposedMeetup = pendingProposal?.proposed_by === currentUserId;
   const canRespondToProposal = pendingProposal && !userProposedMeetup;
 
+  // Check if recovery is in active state where surrender is allowed
+  const canSurrender = isOwner && ['found', 'meetup_proposed', 'meetup_confirmed'].includes(recovery.status);
+
   return (
     <ScrollView
       style={styles.container}
@@ -339,6 +394,31 @@ export default function RecoveryDetailScreen() {
           <Text style={styles.recoveredText}>
             This disc was successfully returned on {formatDate(recovery.recovered_at || recovery.updated_at)}
           </Text>
+        </RNView>
+      )}
+
+      {/* Disc Surrendered - shown at top when disc is surrendered */}
+      {recovery.status === 'surrendered' && (
+        <RNView style={[styles.section, styles.surrenderedSection]}>
+          <FontAwesome name="gift" size={48} color="#9B59B6" />
+          <Text style={styles.surrenderedTitle}>
+            {isOwner ? 'Disc Surrendered' : 'Disc Received!'}
+          </Text>
+          <Text style={styles.surrenderedText}>
+            {isOwner
+              ? `You surrendered this disc to ${recovery.finder.display_name} on ${formatDate(recovery.surrendered_at || recovery.updated_at)}`
+              : `${recovery.owner.display_name} surrendered this disc to you on ${formatDate(recovery.surrendered_at || recovery.updated_at)}. It's now in your collection!`
+            }
+          </Text>
+          {!isOwner && recovery.disc?.id && (
+            <Pressable
+              style={styles.viewDiscButton}
+              onPress={() => router.push(`/disc/${recovery.disc!.id}`)}
+            >
+              <FontAwesome name="eye" size={16} color="#fff" />
+              <Text style={styles.viewDiscButtonText}>View in My Collection</Text>
+            </Pressable>
+          )}
         </RNView>
       )}
 
@@ -553,6 +633,18 @@ export default function RecoveryDetailScreen() {
         >
           <FontAwesome name="calendar-plus-o" size={18} color="#fff" />
           <Text style={styles.primaryButtonText}>Propose a Meetup</Text>
+        </Pressable>
+      )}
+
+      {/* Surrender Disc button - only visible to owner during active recovery */}
+      {canSurrender && (
+        <Pressable
+          style={[styles.surrenderButton, actionLoading && styles.buttonDisabled]}
+          onPress={handleSurrenderDisc}
+          disabled={actionLoading}
+        >
+          <FontAwesome name="gift" size={18} color="#E74C3C" />
+          <Text style={styles.surrenderButtonText}>Surrender Disc to Finder</Text>
         </Pressable>
       )}
 
@@ -843,5 +935,58 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 8,
+  },
+  surrenderedSection: {
+    alignItems: 'center',
+    borderColor: '#9B59B6',
+    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+    paddingVertical: 24,
+  },
+  surrenderedTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 12,
+    color: '#9B59B6',
+  },
+  surrenderedText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  surrenderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#E74C3C',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  surrenderButtonText: {
+    color: '#E74C3C',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  viewDiscButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#9B59B6',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginTop: 16,
+  },
+  viewDiscButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
