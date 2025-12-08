@@ -8,9 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, View } from '@/components/Themed';
+import { Text } from '@/components/Themed';
+import { useColorScheme } from '@/components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Colors from '@/constants/Colors';
@@ -19,6 +21,8 @@ import { supabase } from '@/lib/supabase';
 export default function ProposeMeetupScreen() {
   const { id: recoveryEventId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const [locationName, setLocationName] = useState('');
   const [message, setMessage] = useState('');
@@ -136,7 +140,7 @@ export default function ProposeMeetupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
@@ -149,13 +153,17 @@ export default function ProposeMeetupScreen() {
 
         {/* Location Input */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: isDark ? '#ccc' : '#333' }]}>
             Meetup Location <Text style={styles.required}>*</Text>
           </Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, {
+              backgroundColor: isDark ? '#1a1a1a' : '#f8f8f8',
+              borderColor: isDark ? '#333' : '#ddd',
+              color: isDark ? '#fff' : '#000',
+            }]}
             placeholder="e.g., Parking lot at Maple Hill DGC"
-            placeholderTextColor="#999"
+            placeholderTextColor={isDark ? '#666' : '#999'}
             value={locationName}
             onChangeText={setLocationName}
           />
@@ -166,12 +174,20 @@ export default function ProposeMeetupScreen() {
 
         {/* Date Picker */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: isDark ? '#ccc' : '#333' }]}>
             Date <Text style={styles.required}>*</Text>
           </Text>
-          <Pressable style={styles.pickerButton} onPress={() => setShowDatePicker(true)}>
-            <FontAwesome name="calendar" size={18} color="#666" />
-            <Text style={styles.pickerButtonText}>{formatDate(proposedDate)}</Text>
+          <Pressable
+            style={[styles.pickerButton, {
+              backgroundColor: isDark ? '#1a1a1a' : '#f8f8f8',
+              borderColor: isDark ? '#333' : '#ddd',
+            }]}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <FontAwesome name="calendar" size={18} color={isDark ? '#999' : '#666'} />
+            <Text style={[styles.pickerButtonText, { color: isDark ? '#fff' : '#333' }]}>
+              {formatDate(proposedDate)}
+            </Text>
           </Pressable>
         </View>
 
@@ -187,12 +203,20 @@ export default function ProposeMeetupScreen() {
 
         {/* Time Picker */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: isDark ? '#ccc' : '#333' }]}>
             Time <Text style={styles.required}>*</Text>
           </Text>
-          <Pressable style={styles.pickerButton} onPress={() => setShowTimePicker(true)}>
-            <FontAwesome name="clock-o" size={18} color="#666" />
-            <Text style={styles.pickerButtonText}>{formatTime(proposedDate)}</Text>
+          <Pressable
+            style={[styles.pickerButton, {
+              backgroundColor: isDark ? '#1a1a1a' : '#f8f8f8',
+              borderColor: isDark ? '#333' : '#ddd',
+            }]}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <FontAwesome name="clock-o" size={18} color={isDark ? '#999' : '#666'} />
+            <Text style={[styles.pickerButtonText, { color: isDark ? '#fff' : '#333' }]}>
+              {formatTime(proposedDate)}
+            </Text>
           </Pressable>
         </View>
 
@@ -207,11 +231,17 @@ export default function ProposeMeetupScreen() {
 
         {/* Message Input */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Additional Message (Optional)</Text>
+          <Text style={[styles.label, { color: isDark ? '#ccc' : '#333' }]}>
+            Additional Message (Optional)
+          </Text>
           <TextInput
-            style={[styles.input, styles.messageInput]}
+            style={[styles.input, styles.messageInput, {
+              backgroundColor: isDark ? '#1a1a1a' : '#f8f8f8',
+              borderColor: isDark ? '#333' : '#ddd',
+              color: isDark ? '#fff' : '#000',
+            }]}
             placeholder="Any other details about the meetup..."
-            placeholderTextColor="#999"
+            placeholderTextColor={isDark ? '#666' : '#999'}
             value={message}
             onChangeText={setMessage}
             multiline
@@ -281,11 +311,9 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    backgroundColor: '#fff',
   },
   messageInput: {
     height: 100,
@@ -301,14 +329,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 12,
     padding: 16,
-    backgroundColor: '#fff',
   },
   pickerButtonText: {
     fontSize: 16,
-    color: '#333',
   },
   primaryButton: {
     flexDirection: 'row',
