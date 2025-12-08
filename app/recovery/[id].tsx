@@ -320,28 +320,26 @@ export default function RecoveryDetailScreen() {
         <View style={styles.personRow}>
           <Avatar
             avatarUrl={recovery.owner.avatar_url}
-            name={recovery.owner.display_name}
+            name={isOwner ? 'You' : recovery.owner.display_name}
             size={36}
           />
           <View style={styles.personInfo}>
             <Text style={styles.personLabel}>Owner</Text>
-            <Text style={styles.personName}>
-              {recovery.owner.display_name}
-              {isOwner && <Text style={styles.youBadge}> (You)</Text>}
+            <Text style={[styles.personName, isOwner && styles.youText]}>
+              {isOwner ? 'You' : recovery.owner.display_name}
             </Text>
           </View>
         </View>
         <View style={styles.personRow}>
           <Avatar
             avatarUrl={recovery.finder.avatar_url}
-            name={recovery.finder.display_name}
+            name={!isOwner ? 'You' : recovery.finder.display_name}
             size={36}
           />
           <View style={styles.personInfo}>
             <Text style={styles.personLabel}>Finder</Text>
-            <Text style={styles.personName}>
-              {recovery.finder.display_name}
-              {!isOwner && <Text style={styles.youBadge}> (You)</Text>}
+            <Text style={[styles.personName, !isOwner && styles.youText]}>
+              {!isOwner ? 'You' : recovery.finder.display_name}
             </Text>
           </View>
         </View>
@@ -620,8 +618,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  youBadge: {
-    fontSize: 13,
+  youText: {
     color: Colors.violet.primary,
     fontWeight: '600',
   },
