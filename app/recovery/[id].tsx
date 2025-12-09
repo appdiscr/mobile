@@ -30,9 +30,19 @@ interface MeetupProposal {
   created_at: string;
 }
 
+interface DropOff {
+  id: string;
+  photo_url: string;
+  latitude: number;
+  longitude: number;
+  location_notes?: string;
+  dropped_off_at: string;
+  created_at: string;
+}
+
 interface RecoveryDetails {
   id: string;
-  status: 'found' | 'meetup_proposed' | 'meetup_confirmed' | 'recovered' | 'cancelled' | 'surrendered';
+  status: 'found' | 'meetup_proposed' | 'meetup_confirmed' | 'recovered' | 'cancelled' | 'surrendered' | 'dropped_off';
   finder_message?: string;
   found_at: string;
   recovered_at?: string;
@@ -61,6 +71,7 @@ interface RecoveryDetails {
     avatar_url?: string | null;
   };
   meetup_proposals: MeetupProposal[];
+  drop_off?: DropOff | null;
 }
 
 export default function RecoveryDetailScreen() {
@@ -144,6 +155,19 @@ export default function RecoveryDetailScreen() {
         },
         () => {
           // Refetch when meetup proposals change
+          fetchRecoveryDetails();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drop_offs',
+          filter: `recovery_event_id=eq.${recoveryId}`,
+        },
+        () => {
+          // Refetch when drop-offs change
           fetchRecoveryDetails();
         }
       )
@@ -328,6 +352,8 @@ export default function RecoveryDetailScreen() {
         return { label: 'Meetup Proposed', color: '#3498DB', icon: 'calendar' as const };
       case 'meetup_confirmed':
         return { label: 'Meetup Confirmed', color: '#2ECC71', icon: 'check-circle' as const };
+      case 'dropped_off':
+        return { label: 'Dropped Off', color: '#9B59B6', icon: 'map-marker' as const };
       case 'recovered':
         return { label: 'Recovered', color: '#27AE60', icon: 'check' as const };
       case 'cancelled':
@@ -372,7 +398,7 @@ export default function RecoveryDetailScreen() {
   const canRespondToProposal = pendingProposal && !userProposedMeetup;
 
   // Check if recovery is in active state where surrender is allowed
-  const canSurrender = isOwner && ['found', 'meetup_proposed', 'meetup_confirmed'].includes(recovery.status);
+  const canSurrender = isOwner && ['found', 'meetup_proposed', 'meetup_confirmed', 'dropped_off'].includes(recovery.status);
 
   return (
     <ScrollView
@@ -417,6 +443,63 @@ export default function RecoveryDetailScreen() {
             >
               <FontAwesome name="eye" size={16} color="#fff" />
               <Text style={styles.viewDiscButtonText}>View in My Collection</Text>
+            </Pressable>
+          )}
+        </RNView>
+      )}
+
+      {/* Drop-off Details - shown when disc has been dropped off */}
+      {recovery.status === 'dropped_off' && recovery.drop_off && (
+        <RNView style={[styles.section, styles.droppedOffSection]}>
+          <FontAwesome name="map-marker" size={48} color="#9B59B6" />
+          <Text style={styles.droppedOffTitle}>
+            {isOwner ? 'Disc Dropped Off!' : 'You Dropped Off the Disc'}
+          </Text>
+          <Text style={styles.droppedOffText}>
+            {isOwner
+              ? `${recovery.finder.display_name} left your disc for pickup on ${formatDate(recovery.drop_off.dropped_off_at)}`
+              : `You left this disc for ${recovery.owner.display_name} to pick up`
+            }
+          </Text>
+
+          {/* Drop-off photo */}
+          <Image source={{ uri: recovery.drop_off.photo_url }} style={styles.dropOffPhoto} />
+
+          {/* Location notes */}
+          {recovery.drop_off.location_notes && (
+            <RNView style={styles.dropOffNotesBox}>
+              <FontAwesome name="sticky-note-o" size={16} color="#666" />
+              <Text style={styles.dropOffNotesText}>{recovery.drop_off.location_notes}</Text>
+            </RNView>
+          )}
+
+          {/* Get Directions button */}
+          <Pressable
+            style={styles.directionsButton}
+            onPress={() => {
+              const url = `https://maps.google.com/?q=${recovery.drop_off!.latitude},${recovery.drop_off!.longitude}`;
+              Linking.openURL(url);
+            }}
+          >
+            <FontAwesome name="location-arrow" size={16} color="#fff" />
+            <Text style={styles.directionsButtonText}>Get Directions to Pickup</Text>
+          </Pressable>
+
+          {/* Mark as Recovered button for owner */}
+          {isOwner && (
+            <Pressable
+              style={[styles.primaryButton, { marginTop: 12 }]}
+              onPress={handleCompleteRecovery}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <FontAwesome name="check" size={18} color="#fff" />
+                  <Text style={styles.primaryButtonText}>Mark as Recovered</Text>
+                </>
+              )}
             </Pressable>
           )}
         </RNView>
@@ -625,15 +708,26 @@ export default function RecoveryDetailScreen() {
         </RNView>
       )}
 
-      {/* Propose Meetup button - available to both owner and finder when status is 'found' */}
+      {/* Action buttons when status is 'found' */}
       {recovery.status === 'found' && (
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => router.push(`/propose-meetup/${recoveryId}`)}
-        >
-          <FontAwesome name="calendar-plus-o" size={18} color="#fff" />
-          <Text style={styles.primaryButtonText}>Propose a Meetup</Text>
-        </Pressable>
+        <RNView style={styles.foundActionButtons}>
+          <Pressable
+            style={[styles.primaryButton, styles.foundActionButton]}
+            onPress={() => router.push(`/propose-meetup/${recoveryId}`)}
+          >
+            <FontAwesome name="calendar-plus-o" size={18} color="#fff" />
+            <Text style={styles.primaryButtonText}>Propose a Meetup</Text>
+          </Pressable>
+          {!isOwner && (
+            <Pressable
+              style={[styles.dropOffButton, styles.foundActionButton]}
+              onPress={() => router.push({ pathname: '/drop-off/[id]' as const, params: { id: recoveryId } } as never)}
+            >
+              <FontAwesome name="map-marker" size={18} color={Colors.violet.primary} />
+              <Text style={styles.dropOffButtonText}>Drop Off Disc</Text>
+            </Pressable>
+          )}
+        </RNView>
       )}
 
       {/* Surrender Disc button - only visible to owner during active recovery */}
@@ -988,5 +1082,70 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  foundActionButtons: {
+    gap: 12,
+    marginTop: 8,
+  },
+  foundActionButton: {
+    marginTop: 0,
+  },
+  dropOffButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: Colors.violet.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  dropOffButtonText: {
+    color: Colors.violet.primary,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  droppedOffSection: {
+    alignItems: 'center',
+    borderColor: '#9B59B6',
+    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+    paddingVertical: 24,
+  },
+  droppedOffTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 12,
+    color: '#9B59B6',
+  },
+  droppedOffText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  dropOffPhoto: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  dropOffNotesBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    width: '100%',
+  },
+  dropOffNotesText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#444',
+    lineHeight: 20,
   },
 });
