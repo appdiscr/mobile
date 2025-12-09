@@ -107,6 +107,34 @@ pre-commit autoupdate           # Update hook versions
 
 ## Important Notes
 
+### Test-Driven Development (TDD) - MANDATORY
+
+**CRITICAL:** All new code MUST be developed using Test-Driven Development:
+
+1. **Write tests FIRST** - Before writing any implementation code, write tests
+1. **Red-Green-Refactor cycle:**
+   - RED: Write a failing test for the new functionality
+   - GREEN: Write minimal code to make the test pass
+   - REFACTOR: Clean up while keeping tests green
+1. **Test coverage requirements:**
+   - All components must have unit tests
+   - All hooks must be tested
+   - All API interactions must be tested
+   - All user flows must have integration tests
+1. **Test file locations:**
+   - Component tests: `__tests__/<component>.test.tsx`
+   - Hook tests: `__tests__/hooks/<hook>.test.ts`
+   - Integration tests: `__tests__/integration/`
+1. **Running tests:**
+
+   ```bash
+   npm test                    # Run all tests
+   npm test -- --watch         # Watch mode
+   npm test -- --coverage      # With coverage report
+   ```
+
+**DO NOT write implementation code without tests. This is non-negotiable.**
+
 ### Code Quality Standards
 
 **CRITICAL:** All code must adhere to linter rules from the start.
@@ -171,7 +199,7 @@ useProtectedRoute checks user state
 
 ---
 
-**Last Updated:** 2025-12-03
+**Last Updated:** 2025-12-09
 
 This file should be updated whenever:
 
