@@ -277,4 +277,57 @@ describe('AddDiscScreen', () => {
     expect(getByText('Notes')).toBeTruthy();
     expect(getByPlaceholderText('Any additional notes about this disc...')).toBeTruthy();
   });
+
+  it('displays mold label with required asterisk', () => {
+    const { getByText } = render(<AddDiscScreen />);
+
+    expect(getByText(/Mold/)).toBeTruthy();
+  });
+
+  it('allows entering weight value', () => {
+    const { getByPlaceholderText } = render(<AddDiscScreen />);
+
+    const weightInput = getByPlaceholderText('e.g., 175');
+    fireEvent.changeText(weightInput, '168');
+
+    expect(weightInput.props.value).toBe('168');
+  });
+
+  it('allows entering notes', () => {
+    const { getByPlaceholderText } = render(<AddDiscScreen />);
+
+    const notesInput = getByPlaceholderText('Any additional notes about this disc...');
+    fireEvent.changeText(notesInput, 'My favorite driver');
+
+    expect(notesInput.props.value).toBe('My favorite driver');
+  });
+
+  it('allows entering reward amount', () => {
+    const { getByPlaceholderText } = render(<AddDiscScreen />);
+
+    const rewardInput = getByPlaceholderText('0.00');
+    fireEvent.changeText(rewardInput, '15.00');
+
+    expect(rewardInput.props.value).toBe('15.00');
+  });
+
+  it('shows cancel button', () => {
+    const { getByText } = render(<AddDiscScreen />);
+
+    expect(getByText('Cancel')).toBeTruthy();
+  });
+
+  it('navigates back when cancel is pressed', () => {
+    const { getByText } = render(<AddDiscScreen />);
+
+    fireEvent.press(getByText('Cancel'));
+
+    expect(mockRouterBack).toHaveBeenCalled();
+  });
+
+  it('shows save button', () => {
+    const { getByText } = render(<AddDiscScreen />);
+
+    expect(getByText('Save Disc')).toBeTruthy();
+  });
 });

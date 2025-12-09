@@ -5,18 +5,22 @@ import MyBagScreen from '../../app/(tabs)/my-bag';
 
 // Mock expo-router
 const mockRouterPush = jest.fn();
-// Track if useFocusEffect has been called to prevent infinite loop
-let focusEffectCallback: (() => void) | null = null;
 jest.mock('expo-router', () => {
   const React = require('react');
   return {
     useRouter: () => ({
       push: mockRouterPush,
     }),
-    useFocusEffect: (callback: () => void) => {
+    useFocusEffect: (callback: React.EffectCallback) => {
+      // useFocusEffect runs on every render when the callback reference changes
+      // The component uses useCallback with [cacheLoaded] dependency,
+      // so we need to run the effect when the callback changes
       React.useEffect(() => {
-        callback();
-      }, []);
+        const cleanup = callback();
+        return () => {
+          if (cleanup) cleanup();
+        };
+      }, [callback]);
     },
   };
 });

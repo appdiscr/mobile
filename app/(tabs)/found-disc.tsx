@@ -500,6 +500,9 @@ export default function FoundDiscScreen() {
                     {recovery.disc?.manufacturer && (
                       <Text style={styles.pendingManufacturer}>{recovery.disc.manufacturer}</Text>
                     )}
+                    {recovery.disc?.color && (
+                      <Text style={styles.pendingColor}>{recovery.disc.color}</Text>
+                    )}
                     <View style={styles.pendingStatusRow}>
                       <View style={[styles.statusBadge, getStatusStyle(recovery.status)]}>
                         <Text style={styles.statusText}>{formatStatus(recovery.status)}</Text>
@@ -687,6 +690,10 @@ export default function FoundDiscScreen() {
 
   // Success State
   if (screenState === 'success' && recoveryEvent) {
+    const navigateToDropOff = () => {
+      router.push(`/drop-off/${recoveryEvent.id}`);
+    };
+
     return (
       <View style={[styles.centerContainer, { backgroundColor: isDark ? '#000' : '#fff' }]}>
         <FontAwesome name="check-circle" size={80} color="#2ECC71" />
@@ -695,13 +702,20 @@ export default function FoundDiscScreen() {
           You've reported finding "{recoveryEvent.disc_name}". The owner has been notified.
         </Text>
 
+        <Text style={styles.nextStepsTitle}>What would you like to do next?</Text>
+
         <Pressable style={styles.primaryButton} onPress={navigateToProposeMeetup}>
           <FontAwesome name="calendar" size={18} color="#fff" />
           <Text style={styles.primaryButtonText}>Propose a Meetup</Text>
         </Pressable>
 
-        <Pressable style={styles.secondaryButton} onPress={resetScreen}>
-          <Text style={styles.secondaryButtonText}>Report Another Disc</Text>
+        <Pressable style={styles.secondaryButton} onPress={navigateToDropOff}>
+          <FontAwesome name="map-marker" size={18} color="#fff" />
+          <Text style={styles.secondaryButtonText}>Drop Off Disc</Text>
+        </Pressable>
+
+        <Pressable style={styles.textButton} onPress={resetScreen}>
+          <Text style={styles.textButtonText}>Report Another Disc</Text>
         </Pressable>
       </View>
     );
@@ -923,7 +937,12 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 32,
+    marginBottom: 16,
+  },
+  nextStepsTitle: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 16,
     paddingHorizontal: 20,
   },
   orDivider: {
@@ -1121,6 +1140,11 @@ const styles = StyleSheet.create({
   pendingManufacturer: {
     fontSize: 14,
     color: '#666',
+  },
+  pendingColor: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
   },
   pendingStatusRow: {
     flexDirection: 'row',

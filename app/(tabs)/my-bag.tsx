@@ -82,24 +82,29 @@ export default function MyBagScreen() {
   const [discs, setDiscs] = useState<Disc[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
 
-  // Load cached data on mount
+  // Load cached data immediately on mount - this runs once
   useEffect(() => {
     const loadCachedData = async () => {
       const cached = await getCachedDiscs();
       if (cached && cached.length > 0) {
         setDiscs(cached as Disc[]);
-        setLoading(false);
+        setLoading(false); // Don't show spinner if we have cached data
       }
+      setCacheLoaded(true);
     };
     loadCachedData();
   }, []);
 
   const fetchDiscs = async (isRefreshing = false) => {
     try {
-      // Only show loading spinner on initial load if no cached data
-      if (!isRefreshing && isInitialLoad && discs.length === 0) {
+      // Only show loading spinner if:
+      // 1. We're not refreshing (pull-to-refresh has its own indicator)
+      // 2. We haven't fetched before
+      // 3. We have no discs to display (no cache)
+      if (!isRefreshing && !hasFetchedOnce && discs.length === 0) {
         setLoading(true);
       }
 
@@ -141,14 +146,17 @@ export default function MyBagScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
-      setIsInitialLoad(false);
+      setHasFetchedOnce(true);
     }
   };
 
+  // Only fetch on focus after cache has been checked
   useFocusEffect(
     useCallback(() => {
-      fetchDiscs();
-    }, [])
+      if (cacheLoaded) {
+        fetchDiscs();
+      }
+    }, [cacheLoaded])
   );
 
   const onRefresh = useCallback(() => {
