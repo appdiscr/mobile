@@ -12,6 +12,7 @@ import Colors from '@/constants/Colors';
  * This route handles incoming QR code scans from the native camera.
  * It looks up the disc and redirects appropriately:
  * - If user owns the disc: redirect to disc detail page
+ * - If disc is claimable (abandoned): redirect to claim page
  * - If user doesn't own disc: redirect to found-disc tab with the code pre-filled
  */
 export default function DeepLinkHandler() {
@@ -56,6 +57,23 @@ export default function DeepLinkHandler() {
       // If user owns this disc, go to detail page
       if (data.is_owner) {
         router.replace(`/disc/${data.disc.id}`);
+        return;
+      }
+
+      // If disc is claimable (abandoned with no owner), go to claim page
+      if (data.is_claimable) {
+        router.replace({
+          pathname: '/claim-disc',
+          params: {
+            discId: data.disc.id,
+            discName: data.disc.name || '',
+            discManufacturer: data.disc.manufacturer || '',
+            discMold: data.disc.mold || '',
+            discPlastic: data.disc.plastic || '',
+            discColor: data.disc.color || '',
+            discPhotoUrl: data.disc.photo_url || '',
+          },
+        });
         return;
       }
 

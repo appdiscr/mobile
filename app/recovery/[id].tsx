@@ -42,7 +42,7 @@ interface DropOff {
 
 interface RecoveryDetails {
   id: string;
-  status: 'found' | 'meetup_proposed' | 'meetup_confirmed' | 'recovered' | 'cancelled' | 'surrendered' | 'dropped_off';
+  status: 'found' | 'meetup_proposed' | 'meetup_confirmed' | 'recovered' | 'cancelled' | 'surrendered' | 'dropped_off' | 'abandoned';
   finder_message?: string;
   found_at: string;
   recovered_at?: string;
@@ -323,6 +323,54 @@ export default function RecoveryDetailScreen() {
     );
   };
 
+  const handleAbandonDisc = async () => {
+    const discName = recovery?.disc?.name || 'this disc';
+
+    Alert.alert(
+      'Abandon Disc?',
+      `This will make ${discName} available for anyone to claim. The disc will remain at the drop-off location until someone finds it. This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Abandon',
+          style: 'destructive',
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) throw new Error('Not authenticated');
+
+              const response = await fetch(
+                `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/abandon-disc`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                  },
+                  body: JSON.stringify({ recovery_event_id: recoveryId }),
+                }
+              );
+
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.error || 'Failed to abandon disc');
+
+              Alert.alert(
+                'Disc Abandoned',
+                `${discName} is now available for anyone to claim. It will be removed from your collection.`,
+                [{ text: 'OK', onPress: () => router.replace('/') }]
+              );
+            } catch (err) {
+              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to abandon disc');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleGetDirections = (proposal: MeetupProposal) => {
     if (proposal.latitude && proposal.longitude) {
       const url = `https://maps.google.com/?q=${proposal.latitude},${proposal.longitude}`;
@@ -360,6 +408,8 @@ export default function RecoveryDetailScreen() {
         return { label: 'Cancelled', color: '#E74C3C', icon: 'times' as const };
       case 'surrendered':
         return { label: 'Surrendered', color: '#9B59B6', icon: 'gift' as const };
+      case 'abandoned':
+        return { label: 'Abandoned', color: '#95A5A6', icon: 'times-circle' as const };
       default:
         return { label: status, color: '#95A5A6', icon: 'question' as const };
     }
@@ -397,8 +447,11 @@ export default function RecoveryDetailScreen() {
   const userProposedMeetup = pendingProposal?.proposed_by === currentUserId;
   const canRespondToProposal = pendingProposal && !userProposedMeetup;
 
-  // Check if recovery is in active state where surrender is allowed
-  const canSurrender = isOwner && ['found', 'meetup_proposed', 'meetup_confirmed', 'dropped_off'].includes(recovery.status);
+  // Check if recovery is in active state where surrender is allowed (not for dropped_off - use abandon instead)
+  const canSurrender = isOwner && ['found', 'meetup_proposed', 'meetup_confirmed'].includes(recovery.status);
+
+  // Check if recovery is dropped_off where abandon is allowed
+  const canAbandon = isOwner && recovery.status === 'dropped_off';
 
   return (
     <ScrollView
@@ -742,6 +795,18 @@ export default function RecoveryDetailScreen() {
         </Pressable>
       )}
 
+      {/* Abandon Disc button - only visible to owner when disc is dropped off */}
+      {canAbandon && (
+        <Pressable
+          style={[styles.abandonButton, actionLoading && styles.buttonDisabled]}
+          onPress={handleAbandonDisc}
+          disabled={actionLoading}
+        >
+          <FontAwesome name="times-circle" size={18} color="#E74C3C" />
+          <Text style={styles.abandonButtonText}>Abandon Disc</Text>
+        </Pressable>
+      )}
+
     </ScrollView>
   );
 }
@@ -1063,6 +1128,24 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   surrenderButtonText: {
+    color: '#E74C3C',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  abandonButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#E74C3C',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  abandonButtonText: {
     color: '#E74C3C',
     fontSize: 16,
     fontWeight: '600',
