@@ -292,35 +292,43 @@ export default function ProfileScreen() {
 
     setLoadingFinds(true);
     try {
-      // Get recovery events where the user is the finder
-      const { data: recoveries, error: recoveriesError } = await supabase
-        .from('recovery_events')
-        .select(`
-          id,
-          status,
-          created_at,
-          disc:discs(id, name, manufacturer, mold, color)
-        `)
-        .eq('finder_id', user.id)
-        .not('status', 'in', '("recovered","cancelled","surrendered")')
-        .order('created_at', { ascending: false });
-
-      if (recoveriesError) {
-        console.error('Error fetching my finds:', recoveriesError);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         setMyFinds([]);
         return;
       }
 
-      // Transform data
-      const transformedFinds: ActiveRecovery[] = (recoveries || []).map((r) => {
-        const discData = Array.isArray(r.disc) ? r.disc[0] : r.disc;
-        return {
-          id: r.id,
-          status: r.status,
-          created_at: r.created_at,
-          disc: discData as ActiveRecovery['disc'],
-        };
-      });
+      // Use edge function to get finds (bypasses RLS issues)
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/get-my-finds`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Error fetching my finds:', await response.text());
+        setMyFinds([]);
+        return;
+      }
+
+      const recoveries = await response.json();
+
+      // Transform data to match ActiveRecovery interface
+      const transformedFinds: ActiveRecovery[] = (recoveries || []).map((r: {
+        id: string;
+        status: string;
+        created_at: string;
+        disc: { id: string; name: string; manufacturer: string | null; mold: string | null; color: string | null } | null;
+      }) => ({
+        id: r.id,
+        status: r.status,
+        created_at: r.created_at,
+        disc: r.disc,
+      }));
 
       setMyFinds(transformedFinds);
     } catch (error) {
@@ -379,6 +387,8 @@ export default function ProfileScreen() {
         return { label: 'Meetup Proposed', color: '#3b82f6', icon: 'calendar' as const };
       case 'meetup_confirmed':
         return { label: 'Meetup Confirmed', color: '#10b981', icon: 'check-circle' as const };
+      case 'dropped_off':
+        return { label: 'Dropped Off', color: '#8b5cf6', icon: 'map-marker' as const };
       default:
         return { label: status, color: '#6b7280', icon: 'question-circle' as const };
     }

@@ -208,6 +208,8 @@ export default function FoundDiscScreen() {
         return { backgroundColor: '#3498DB' };
       case 'meetup_confirmed':
         return { backgroundColor: '#2ECC71' };
+      case 'dropped_off':
+        return { backgroundColor: '#8b5cf6' };
       default:
         return { backgroundColor: '#95A5A6' };
     }
@@ -221,6 +223,8 @@ export default function FoundDiscScreen() {
         return isOwner ? 'Review meetup' : 'Meetup proposed';
       case 'meetup_confirmed':
         return 'Meetup confirmed';
+      case 'dropped_off':
+        return isOwner ? 'Ready for pickup' : 'Dropped off';
       default:
         return status;
     }
