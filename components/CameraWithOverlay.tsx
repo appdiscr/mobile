@@ -11,9 +11,17 @@ interface CameraWithOverlayProps {
   visible: boolean;
   onClose: () => void;
   onPhotoTaken: (uri: string) => void;
+  showCircleGuide?: boolean;
+  helperText?: string;
 }
 
-export default function CameraWithOverlay({ visible, onClose, onPhotoTaken }: CameraWithOverlayProps) {
+export default function CameraWithOverlay({
+  visible,
+  onClose,
+  onPhotoTaken,
+  showCircleGuide = true,
+  helperText = 'Center your disc in the circle',
+}: CameraWithOverlayProps) {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -59,12 +67,16 @@ export default function CameraWithOverlay({ visible, onClose, onPhotoTaken }: Ca
     <Modal visible={visible} animationType="slide">
       <View style={styles.container}>
         <CameraView ref={cameraRef} style={styles.camera} facing={facing}>
-          {/* Dark overlay with circle guide */}
+          {/* Overlay with optional circle guide */}
           <View style={styles.overlay}>
-            <View style={styles.circleGuide}>
-              <View style={styles.circle} />
-            </View>
-            <Text style={styles.helperText}>Center your disc in the circle</Text>
+            {showCircleGuide && (
+              <View style={styles.circleGuide}>
+                <View style={styles.circle} />
+              </View>
+            )}
+            <Text style={[styles.helperText, !showCircleGuide && styles.helperTextNoCircle]}>
+              {helperText}
+            </Text>
           </View>
 
           {/* Controls */}
@@ -158,6 +170,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     overflow: 'hidden',
+  },
+  helperTextNoCircle: {
+    marginTop: 0,
+    position: 'absolute',
+    top: 100,
   },
   controls: {
     position: 'absolute',

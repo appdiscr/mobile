@@ -151,31 +151,35 @@ export default function DropOffScreen() {
       // Compress the image
       const compressed = await compressImage(uri);
 
-      // Get the file data
-      const response = await fetch(compressed.uri);
-      const blob = await response.blob();
+      // Create form data for edge function
+      const formData = new FormData();
+      formData.append('recovery_event_id', recoveryEventId);
+      formData.append('file', {
+        uri: compressed.uri,
+        type: 'image/jpeg',
+        name: 'drop-off-photo.jpg',
+      } as unknown as Blob);
 
-      // Generate unique filename
-      const fileName = `drop-off-${recoveryEventId}-${Date.now()}.jpg`;
-      const filePath = `drop-offs/${fileName}`;
+      // Upload via edge function
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/upload-drop-off-photo`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
 
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage.from('disc-photos').upload(filePath, blob, {
-        contentType: 'image/jpeg',
-        upsert: false,
-      });
+      const data = await response.json();
 
-      if (error) {
-        console.error('Upload error:', error);
+      if (!response.ok) {
+        console.error('Upload error:', data.error);
         return null;
       }
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('disc-photos').getPublicUrl(data.path);
-
-      return publicUrl;
+      return data.photo_url;
     } catch (error) {
       console.error('Error uploading photo:', error);
       return null;
@@ -422,6 +426,8 @@ export default function DropOffScreen() {
         visible={showCamera}
         onClose={() => setShowCamera(false)}
         onPhotoTaken={handlePhotoTaken}
+        showCircleGuide={false}
+        helperText="Take a photo of the drop-off location"
       />
     </KeyboardAvoidingView>
   );
