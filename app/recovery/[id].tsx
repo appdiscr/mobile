@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   Pressable,
@@ -10,7 +10,7 @@ import {
   RefreshControl,
   View as RNView,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import { Avatar } from '@/components/Avatar';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -77,6 +77,7 @@ interface RecoveryDetails {
 export default function RecoveryDetailScreen() {
   const { id: recoveryId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -85,6 +86,26 @@ export default function RecoveryDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Set up custom back button that always works
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
+          style={{ paddingHorizontal: 8, paddingVertical: 4 }}
+        >
+          <FontAwesome name="chevron-left" size={20} color={Colors.violet.primary} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, router]);
 
   const fetchRecoveryDetails = useCallback(async () => {
     try {
