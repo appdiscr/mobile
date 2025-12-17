@@ -19,8 +19,8 @@ describe('Avatar', () => {
         <Avatar avatarUrl="https://example.com/bad-url.jpg" name="John Doe" />
       );
 
-      // Find the Image component and trigger error
-      const Image = require('react-native').Image;
+      // Find the expo-image Image component and trigger error
+      const { Image } = require('expo-image');
       const image = UNSAFE_getByType(Image);
       fireEvent(image, 'error');
 
