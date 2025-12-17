@@ -667,10 +667,10 @@ export default function DiscDetailScreen() {
               style={styles.linkQrButton}
               onPress={startScanning}>
               <FontAwesome name="qrcode" size={20} color={Colors.violet.primary} />
-              <View style={styles.linkQrTextContainer}>
+              <RNView style={styles.linkQrTextContainer}>
                 <Text style={styles.linkQrButtonText}>Link QR Code</Text>
                 <Text style={styles.linkQrHint}>Scan a QR sticker to attach to this disc</Text>
-              </View>
+              </RNView>
               <FontAwesome name="camera" size={16} color={Colors.violet.primary} />
             </Pressable>
           )}

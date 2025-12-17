@@ -155,6 +155,34 @@ pre-commit autoupdate           # Update hook versions
 - Test on both iOS and Android platforms
 - Handle offline scenarios gracefully
 
+### Themed Components - IMPORTANT
+
+**ALWAYS prefer `View` from `react-native` over the themed `View`.**
+
+The project has themed components in `@/components/Themed` that apply automatic
+background colors based on the color scheme. This causes unwanted white/dark
+backgrounds in nested views.
+
+```typescript
+// BAD - causes white background issues
+import { View, Text } from '@/components/Themed';
+
+// GOOD - use RN View directly, only use Themed Text when needed
+import { View as RNView } from 'react-native';
+import { Text } from '@/components/Themed';
+
+// Or import both and alias
+import { View as RNView } from 'react-native';
+import { Text, View } from '@/components/Themed';
+// Then use RNView for containers, View only when you need themed background
+```
+
+**Rule of thumb:**
+
+- Use `RNView` (from react-native) for layout containers
+- Use themed `Text` for text that should respect dark/light mode
+- Only use themed `View` when you explicitly want a themed background
+
 ### Supabase Integration
 
 - Never commit actual credentials to git
@@ -207,7 +235,7 @@ useProtectedRoute checks user state
 
 ---
 
-**Last Updated:** 2025-12-09
+**Last Updated:** 2025-12-16
 
 This file should be updated whenever:
 
