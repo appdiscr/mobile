@@ -9,10 +9,11 @@ export default function CheckoutCancelScreen() {
   const isDark = colorScheme === 'dark';
 
   useEffect(() => {
-    // Navigate back to home after 2 seconds
+    // Navigate back to home after 3 seconds
+    // Increased delay to ensure app is fully loaded after deep link
     const timer = setTimeout(() => {
-      router.push('/(tabs)');
-    }, 2000);
+      router.replace('/(tabs)');
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);

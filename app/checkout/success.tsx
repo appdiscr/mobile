@@ -9,14 +9,15 @@ export default function CheckoutSuccessScreen() {
   const isDark = colorScheme === 'dark';
 
   useEffect(() => {
-    // Navigate to order detail or home after 2 seconds
+    // Navigate to order detail or home after 3 seconds
+    // Increased delay to ensure app is fully loaded after deep link
     const timer = setTimeout(() => {
       if (order_id) {
-        router.push(`/orders/${order_id}`);
+        router.replace(`/orders/${order_id}`);
       } else {
-        router.push('/(tabs)');
+        router.replace('/(tabs)');
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [order_id]);
