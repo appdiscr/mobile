@@ -41,6 +41,12 @@ jest.mock('../../lib/supabase', () => ({
 // Mock QRCode component
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 
+// Mock expo-camera
+jest.mock('expo-camera', () => ({
+  CameraView: 'CameraView',
+  useCameraPermissions: () => [{ granted: false }, jest.fn()],
+}));
+
 // Mock useColorScheme
 jest.mock('../../components/useColorScheme', () => ({
   useColorScheme: () => 'light',
@@ -315,7 +321,7 @@ describe('DiscDetailScreen', () => {
     });
   });
 
-  it('shows not linked message when no QR code', async () => {
+  it('shows link QR code button when no QR code', async () => {
     const discWithoutQR = { ...mockDisc, qr_code: null };
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
@@ -325,7 +331,8 @@ describe('DiscDetailScreen', () => {
     const { getByText } = render(<DiscDetailScreen />);
 
     await waitFor(() => {
-      expect(getByText('Not linked to QR code')).toBeTruthy();
+      expect(getByText('Link QR Code')).toBeTruthy();
+      expect(getByText('Scan a QR sticker to attach to this disc')).toBeTruthy();
     });
   });
 
