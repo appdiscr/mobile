@@ -1,19 +1,63 @@
 import { useEffect } from 'react';
-import { View as RNView, StyleSheet } from 'react-native';
+import { View as RNView, StyleSheet, useColorScheme } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 
 export default function CheckoutCancelScreen() {
   const { order_id } = useLocalSearchParams<{ order_id?: string }>();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     // Navigate back to home after 2 seconds
     const timer = setTimeout(() => {
-      router.replace('/(tabs)');
+      router.push('/(tabs)');
     }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDark ? '#000' : '#fff',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      alignItems: 'center',
+      padding: 20,
+    },
+    emoji: {
+      fontSize: 64,
+      marginBottom: 24,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: 12,
+      color: '#E74C3C',
+      textAlign: 'center',
+    },
+    message: {
+      fontSize: 16,
+      color: isDark ? '#ccc' : '#666',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    orderId: {
+      fontSize: 14,
+      color: isDark ? '#999' : '#666',
+      marginTop: 8,
+      textAlign: 'center',
+    },
+    redirect: {
+      fontSize: 14,
+      color: isDark ? '#999' : '#666',
+      marginTop: 24,
+      textAlign: 'center',
+    },
+  });
 
   return (
     <RNView style={styles.container}>
@@ -33,45 +77,3 @@ export default function CheckoutCancelScreen() {
     </RNView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#E74C3C',
-    textAlign: 'center',
-  },
-  message: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  orderId: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  redirect: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 24,
-    textAlign: 'center',
-  },
-});
