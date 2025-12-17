@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  View as RNView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text, View } from '@/components/Themed';
@@ -273,6 +274,27 @@ export default function MyBagScreen() {
     );
   }
 
+  const renderProtectDiscsBanner = () => {
+    if (discs.length === 0) return null;
+
+    return (
+      <Pressable style={styles.protectBanner} onPress={() => router.push('/order-stickers')}>
+        <RNView style={styles.protectBannerContent}>
+          <RNView style={styles.protectBannerIcon}>
+            <FontAwesome name="shield" size={18} color={Colors.violet.primary} />
+          </RNView>
+          <RNView style={styles.protectBannerText}>
+            <Text style={styles.protectBannerTitle}>Protect Your Collection</Text>
+            <Text style={styles.protectBannerSubtitle}>
+              Add QR stickers to help finders contact you
+            </Text>
+          </RNView>
+          <FontAwesome name="chevron-right" size={14} color="#999" />
+        </RNView>
+      </Pressable>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -281,6 +303,7 @@ export default function MyBagScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.listContent, discs.length === 0 && styles.emptyList]}
         ListEmptyComponent={renderEmptyState}
+        ListHeaderComponent={renderProtectDiscsBanner}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
 
@@ -469,5 +492,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  protectBanner: {
+    backgroundColor: Colors.violet[50],
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.violet[100],
+  },
+  protectBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  protectBannerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  protectBannerText: {
+    flex: 1,
+  },
+  protectBannerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  protectBannerSubtitle: {
+    fontSize: 12,
+    color: '#666',
   },
 });

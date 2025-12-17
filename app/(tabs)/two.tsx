@@ -776,6 +776,39 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* My Orders Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sticker Orders</Text>
+          <TouchableOpacity
+            style={styles.orderRow}
+            onPress={() => router.push('/my-orders')}>
+            <View style={styles.orderRowLeft}>
+              <View style={styles.orderIcon}>
+                <FontAwesome name="qrcode" size={18} color={Colors.violet.primary} />
+              </View>
+              <View style={styles.orderRowText}>
+                <Text style={styles.orderRowTitle}>My Orders</Text>
+                <Text style={styles.orderRowSubtitle}>View order history and tracking</Text>
+              </View>
+            </View>
+            <FontAwesome name="chevron-right" size={14} color="#999" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.orderRow, styles.rowBorder]}
+            onPress={() => router.push('/order-stickers')}>
+            <View style={styles.orderRowLeft}>
+              <View style={[styles.orderIcon, { backgroundColor: Colors.violet[50] }]}>
+                <FontAwesome name="plus" size={18} color={Colors.violet.primary} />
+              </View>
+              <View style={styles.orderRowText}>
+                <Text style={styles.orderRowTitle}>Order More Stickers</Text>
+                <Text style={styles.orderRowSubtitle}>Protect your discs with QR codes</Text>
+              </View>
+            </View>
+            <FontAwesome name="chevron-right" size={14} color="#999" />
+          </TouchableOpacity>
+        </View>
+
         {/* Profile Settings Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Profile Settings</Text>
@@ -1126,5 +1159,37 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  orderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  orderRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  orderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.violet[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  orderRowText: {
+    flex: 1,
+  },
+  orderRowTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  orderRowSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
   },
 });
