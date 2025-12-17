@@ -11,7 +11,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.container}>
+      <RNView style={styles.container}>
         <Text style={styles.title}>Welcome to AceBack!</Text>
         {user && <Text style={styles.email}>{user.email}</Text>}
         <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
@@ -19,7 +19,7 @@ export default function HomeScreen() {
           Never lose your favorite disc again. Track your collection and help others find their lost
           discs.
         </Text>
-      </View>
+      </RNView>
 
       {/* Order Stickers CTA Card */}
       <Pressable style={styles.stickerCard} onPress={() => router.push('/order-stickers')}>
@@ -74,6 +74,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   scrollContent: {
     padding: 20,

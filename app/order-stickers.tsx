@@ -288,7 +288,7 @@ export default function OrderStickersScreen() {
           </RNView>
 
           {/* Spacer for button */}
-          <RNView style={{ height: 100 }} />
+          <RNView style={{ height: 120 }} />
         </ScrollView>
 
         {/* Checkout Button */}
@@ -321,9 +321,11 @@ export default function OrderStickersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   content: {
     padding: 16,
