@@ -183,6 +183,82 @@ import { Text, View } from '@/components/Themed';
 - Use themed `Text` for text that should respect dark/light mode
 - Only use themed `View` when you explicitly want a themed background
 
+### Dark Mode Support - MANDATORY
+
+**CRITICAL:** All new screens and components MUST support both light and dark
+modes from the start. Never hardcode colors that don't adapt to the theme.
+
+**Required Pattern:**
+
+```typescript
+import { useColorScheme, StyleSheet } from 'react-native';
+
+export default function MyScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Create dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      backgroundColor: isDark ? '#000' : '#fff',
+    },
+    text: {
+      color: isDark ? '#ccc' : '#333',
+    },
+    card: {
+      backgroundColor: isDark ? '#1a1a1a' : '#f8f8f8',
+      borderColor: isDark ? '#333' : '#eee',
+    },
+    input: {
+      backgroundColor: isDark ? '#1a1a1a' : '#fff',
+      borderColor: isDark ? '#333' : '#ddd',
+      color: isDark ? '#fff' : '#000',
+    },
+  };
+
+  return (
+    <View style={[styles.container, dynamicStyles.container]}>
+      <Text style={[styles.text, dynamicStyles.text]}>Hello</Text>
+    </View>
+  );
+}
+
+// Static styles without color values
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  text: {
+    fontSize: 16,
+  },
+});
+```
+
+**Color Guidelines:**
+
+- **Backgrounds:**
+  - Light mode: `#fff` (white), `#f8f8f8` (light gray cards)
+  - Dark mode: `#000` (black), `#1a1a1a` (dark gray cards)
+- **Text:**
+  - Light mode: `#333` (dark gray), `#666` (medium gray)
+  - Dark mode: `#fff` (white), `#ccc` (light gray), `#999` (medium gray)
+- **Borders:**
+  - Light mode: `#eee`, `#ddd`
+  - Dark mode: `#333`, `rgba(255,255,255,0.1)`
+- **Inputs:**
+  - Light mode: white background, light borders
+  - Dark mode: `#1a1a1a` background, `#333` borders
+
+**Testing:**
+
+- Test EVERY new screen in both light and dark modes
+- Use iOS device Settings > Display & Brightness to toggle
+- Verify all text is readable with sufficient contrast
+- Check that cards and inputs have appropriate backgrounds
+
+**DO NOT hardcode colors. Always use the dynamic styles pattern above.**
+
 ### Supabase Integration
 
 - Never commit actual credentials to git
