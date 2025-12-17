@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Image } from 'expo-image';
 import Colors from '@/constants/Colors';
 
 interface AvatarProps {
@@ -15,6 +16,7 @@ interface AvatarProps {
 
 /**
  * Avatar component that displays a user's profile picture.
+ * Uses expo-image for memory and disk caching.
  * Falls back to initials if the image fails to load or is not provided.
  */
 export function Avatar({ avatarUrl, name, size = 40, style }: AvatarProps) {
@@ -52,6 +54,8 @@ export function Avatar({ avatarUrl, name, size = 40, style }: AvatarProps) {
         source={{ uri: avatarUrl }}
         style={[styles.image, containerStyle, style]}
         onError={() => setImageError(true)}
+        cachePolicy="memory-disk"
+        transition={200}
       />
     );
   }
