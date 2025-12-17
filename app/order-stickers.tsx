@@ -1,0 +1,515 @@
+import { useState, useEffect } from 'react';
+import {
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  KeyboardAvoidingView,
+  Platform,
+  View as RNView,
+} from 'react-native';
+import { useRouter, Stack } from 'expo-router';
+import { Text, View } from '@/components/Themed';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Colors from '@/constants/Colors';
+import { supabase } from '@/lib/supabase';
+
+const UNIT_PRICE_CENTS = 100; // $1.00 per sticker
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 100;
+const SHIPPING_PRICE_CENTS = 0; // Free shipping
+
+interface ShippingAddress {
+  name: string;
+  street_address: string;
+  street_address_2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
+
+export default function OrderStickersScreen() {
+  const router = useRouter();
+  const [quantity, setQuantity] = useState(5);
+  const [loading, setLoading] = useState(false);
+  const [address, setAddress] = useState<ShippingAddress>({
+    name: '',
+    street_address: '',
+    street_address_2: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'US',
+  });
+
+  const totalPriceCents = quantity * UNIT_PRICE_CENTS + SHIPPING_PRICE_CENTS;
+  const totalPriceDisplay = (totalPriceCents / 100).toFixed(2);
+
+  const incrementQuantity = () => {
+    if (quantity < MAX_QUANTITY) {
+      setQuantity(quantity + 1);
+    }
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > MIN_QUANTITY) {
+      setQuantity(quantity - 1);
+    }
+  };
+
+  const validateAddress = (): string | null => {
+    if (!address.name.trim()) return 'Name is required';
+    if (!address.street_address.trim()) return 'Street address is required';
+    if (!address.city.trim()) return 'City is required';
+    if (!address.state.trim()) return 'State is required';
+    if (!address.postal_code.trim()) return 'Postal code is required';
+    return null;
+  };
+
+  const handleCheckout = async () => {
+    const validationError = validateAddress();
+    if (validationError) {
+      Alert.alert('Missing Information', validationError);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        Alert.alert('Error', 'Please sign in to place an order');
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-sticker-order`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            quantity,
+            shipping_address: {
+              name: address.name.trim(),
+              street_address: address.street_address.trim(),
+              street_address_2: address.street_address_2.trim(),
+              city: address.city.trim(),
+              state: address.state.trim(),
+              postal_code: address.postal_code.trim(),
+              country: address.country,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create order');
+      }
+
+      const data = await response.json();
+
+      // Open Stripe Checkout in browser
+      if (data.checkout_url) {
+        const supported = await Linking.canOpenURL(data.checkout_url);
+        if (supported) {
+          await Linking.openURL(data.checkout_url);
+          // Navigate back and show message
+          router.back();
+          Alert.alert(
+            'Order Started',
+            'Complete your payment in the browser. You can view your order status in My Orders.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          throw new Error('Cannot open checkout URL');
+        }
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      Alert.alert(
+        'Checkout Failed',
+        error instanceof Error ? error.message : 'Please try again'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Order Stickers',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+          {/* Product Info */}
+          <RNView style={styles.productCard}>
+            <RNView style={styles.productImageContainer}>
+              <FontAwesome name="qrcode" size={64} color={Colors.violet.primary} />
+            </RNView>
+            <Text style={styles.productTitle}>AceBack QR Code Stickers</Text>
+            <Text style={styles.productDescription}>
+              Durable, weatherproof QR stickers. Link to your discs so finders can contact you
+              instantly.
+            </Text>
+          </RNView>
+
+          {/* Quantity Selector */}
+          <RNView style={styles.section}>
+            <Text style={styles.sectionTitle}>Quantity</Text>
+            <RNView style={styles.quantityRow}>
+              <Pressable
+                style={[styles.quantityButton, quantity <= MIN_QUANTITY && styles.quantityButtonDisabled]}
+                onPress={decrementQuantity}
+                disabled={quantity <= MIN_QUANTITY}
+              >
+                <FontAwesome name="minus" size={16} color={quantity <= MIN_QUANTITY ? '#ccc' : Colors.violet.primary} />
+              </Pressable>
+              <RNView style={styles.quantityDisplay}>
+                <Text style={styles.quantityText}>{quantity}</Text>
+              </RNView>
+              <Pressable
+                style={[styles.quantityButton, quantity >= MAX_QUANTITY && styles.quantityButtonDisabled]}
+                onPress={incrementQuantity}
+                disabled={quantity >= MAX_QUANTITY}
+              >
+                <FontAwesome name="plus" size={16} color={quantity >= MAX_QUANTITY ? '#ccc' : Colors.violet.primary} />
+              </Pressable>
+            </RNView>
+            <Text style={styles.pricePerUnit}>
+              ${(UNIT_PRICE_CENTS / 100).toFixed(2)} per sticker
+            </Text>
+          </RNView>
+
+          {/* Shipping Address */}
+          <RNView style={styles.section}>
+            <Text style={styles.sectionTitle}>Shipping Address</Text>
+
+            <Text style={styles.inputLabel}>Full Name *</Text>
+            <TextInput
+              style={styles.input}
+              value={address.name}
+              onChangeText={(text) => setAddress({ ...address, name: text })}
+              placeholder="John Doe"
+              autoComplete="name"
+              autoCapitalize="words"
+            />
+
+            <Text style={styles.inputLabel}>Street Address *</Text>
+            <TextInput
+              style={styles.input}
+              value={address.street_address}
+              onChangeText={(text) => setAddress({ ...address, street_address: text })}
+              placeholder="123 Main St"
+              autoComplete="street-address"
+            />
+
+            <Text style={styles.inputLabel}>Apt, Suite, etc.</Text>
+            <TextInput
+              style={styles.input}
+              value={address.street_address_2}
+              onChangeText={(text) => setAddress({ ...address, street_address_2: text })}
+              placeholder="Apt 4B (optional)"
+            />
+
+            <RNView style={styles.cityStateRow}>
+              <RNView style={styles.cityInput}>
+                <Text style={styles.inputLabel}>City *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={address.city}
+                  onChangeText={(text) => setAddress({ ...address, city: text })}
+                  placeholder="City"
+                  autoComplete="postal-address-locality"
+                />
+              </RNView>
+              <RNView style={styles.stateInput}>
+                <Text style={styles.inputLabel}>State *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={address.state}
+                  onChangeText={(text) => setAddress({ ...address, state: text })}
+                  placeholder="CA"
+                  autoCapitalize="characters"
+                  maxLength={2}
+                />
+              </RNView>
+            </RNView>
+
+            <Text style={styles.inputLabel}>ZIP Code *</Text>
+            <TextInput
+              style={[styles.input, styles.zipInput]}
+              value={address.postal_code}
+              onChangeText={(text) => setAddress({ ...address, postal_code: text })}
+              placeholder="12345"
+              keyboardType="numeric"
+              autoComplete="postal-code"
+              maxLength={10}
+            />
+          </RNView>
+
+          {/* Order Summary */}
+          <RNView style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Order Summary</Text>
+            <RNView style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>
+                {quantity} sticker{quantity !== 1 ? 's' : ''}
+              </Text>
+              <Text style={styles.summaryValue}>
+                ${((quantity * UNIT_PRICE_CENTS) / 100).toFixed(2)}
+              </Text>
+            </RNView>
+            <RNView style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Shipping</Text>
+              <Text style={styles.summaryValueFree}>FREE</Text>
+            </RNView>
+            <View style={styles.summaryDivider} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+            <RNView style={styles.summaryRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>${totalPriceDisplay}</Text>
+            </RNView>
+          </RNView>
+
+          {/* Spacer for button */}
+          <RNView style={{ height: 100 }} />
+        </ScrollView>
+
+        {/* Checkout Button */}
+        <RNView style={styles.checkoutContainer}>
+          <Pressable
+            style={[styles.checkoutButton, loading && styles.checkoutButtonDisabled]}
+            onPress={handleCheckout}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <FontAwesome name="lock" size={18} color="#fff" />
+                <Text style={styles.checkoutButtonText}>
+                  Pay ${totalPriceDisplay}
+                </Text>
+              </>
+            )}
+          </Pressable>
+          <Text style={styles.secureText}>
+            <FontAwesome name="shield" size={12} color="#666" /> Secure checkout powered by Stripe
+          </Text>
+        </RNView>
+      </KeyboardAvoidingView>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+  },
+  productCard: {
+    alignItems: 'center',
+    padding: 24,
+    marginBottom: 24,
+    borderRadius: 16,
+    backgroundColor: Colors.violet[50],
+  },
+  productImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  productTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  productDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  quantityButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.violet[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityButtonDisabled: {
+    backgroundColor: '#f0f0f0',
+  },
+  quantityDisplay: {
+    width: 80,
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  quantityText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: Colors.violet.primary,
+  },
+  pricePerUnit: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+  },
+  cityStateRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cityInput: {
+    flex: 2,
+  },
+  stateInput: {
+    flex: 1,
+  },
+  zipInput: {
+    width: 120,
+  },
+  summaryCard: {
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: '#f8f8f8',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#333',
+  },
+  summaryValueFree: {
+    fontSize: 14,
+    color: '#27AE60',
+    fontWeight: '600',
+  },
+  summaryDivider: {
+    height: 1,
+    marginVertical: 12,
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.violet.primary,
+  },
+  checkoutContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: 32,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  checkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: Colors.violet.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  checkoutButtonDisabled: {
+    opacity: 0.7,
+  },
+  checkoutButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  secureText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+});
