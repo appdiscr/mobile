@@ -27,6 +27,7 @@ import { DiscAutocomplete } from '@/components/DiscAutocomplete';
 import { PlasticPicker } from '@/components/PlasticPicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { CatalogDisc } from '@/hooks/useDiscCatalogSearch';
+import { compressImage } from '@/utils/imageCompression';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -411,19 +412,18 @@ export default function AddDiscScreen() {
           const photoUri = photos[i];
 
           try {
+            // Compress the image before upload
+            const compressed = await compressImage(photoUri);
+
             // Create FormData for photo upload
             const formData = new FormData();
             formData.append('disc_id', data.id);
 
-            // Get file extension from URI
-            const uriParts = photoUri.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-
-            // Create file object for FormData
+            // Create file object for FormData (always JPEG after compression)
             formData.append('file', {
-              uri: photoUri,
-              type: `image/${fileType}`,
-              name: `disc-photo.${fileType}`,
+              uri: compressed.uri,
+              type: 'image/jpeg',
+              name: 'disc-photo.jpg',
             } as any);
 
             const photoResponse = await fetch(

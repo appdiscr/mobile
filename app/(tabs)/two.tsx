@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
+import { compressImage } from '@/utils/imageCompression';
 
 type DisplayPreference = 'username' | 'full_name';
 
@@ -255,15 +256,16 @@ export default function ProfileScreen() {
         return;
       }
 
-      // Create form data
+      // Compress the image before upload
+      const compressed = await compressImage(asset.uri);
+
+      // Create form data (always JPEG after compression)
       const formData = new FormData();
-      const fileExtension = asset.uri.split('.').pop() || 'jpg';
-      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
 
       formData.append('file', {
-        uri: asset.uri,
-        type: mimeType,
-        name: `photo.${fileExtension}`,
+        uri: compressed.uri,
+        type: 'image/jpeg',
+        name: 'photo.jpg',
       } as unknown as Blob);
 
       const response = await fetch(
