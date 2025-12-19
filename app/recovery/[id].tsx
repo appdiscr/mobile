@@ -17,6 +17,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { useColorScheme } from '@/components/useColorScheme';
+import { Skeleton } from '@/components/Skeleton';
 
 interface MeetupProposal {
   id: string;
@@ -518,10 +519,35 @@ export default function RecoveryDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.violet.primary} />
-        <Text style={styles.loadingText}>Loading recovery details...</Text>
-      </View>
+      <ScrollView style={styles.container} contentContainerStyle={styles.skeletonContent}>
+        {/* Status badge skeleton */}
+        <Skeleton width={120} height={32} borderRadius={16} style={{ marginBottom: 16, alignSelf: 'center' }} />
+
+        {/* Disc info skeleton */}
+        <RNView style={[styles.skeletonCard, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+          <Skeleton width={80} height={80} borderRadius={40} style={{ marginBottom: 12 }} />
+          <Skeleton width={150} height={20} style={{ marginBottom: 8 }} />
+          <Skeleton width={100} height={16} style={{ marginBottom: 8 }} />
+          <Skeleton width={80} height={14} />
+        </RNView>
+
+        {/* People involved skeleton */}
+        <RNView style={[styles.skeletonCard, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+          <Skeleton width={100} height={14} style={{ marginBottom: 16 }} />
+          <RNView style={styles.skeletonPeopleRow}>
+            <Skeleton width={50} height={50} borderRadius={25} />
+            <Skeleton width={100} height={16} />
+          </RNView>
+          <RNView style={styles.skeletonPeopleRow}>
+            <Skeleton width={50} height={50} borderRadius={25} />
+            <Skeleton width={100} height={16} />
+          </RNView>
+        </RNView>
+
+        {/* Action buttons skeleton */}
+        <Skeleton width="100%" height={50} borderRadius={12} style={{ marginTop: 16 }} />
+        <Skeleton width="100%" height={50} borderRadius={12} style={{ marginTop: 12 }} />
+      </ScrollView>
     );
   }
 
@@ -943,6 +969,23 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#666',
+  },
+  skeletonContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  skeletonCard: {
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  skeletonPeopleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    width: '100%',
   },
   errorTitle: {
     fontSize: 24,

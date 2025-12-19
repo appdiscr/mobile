@@ -20,6 +20,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { useColorScheme } from '@/components/useColorScheme';
+import { RecoveryCardSkeleton } from '@/components/Skeleton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -494,7 +495,20 @@ export default function FoundDiscScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* My Discs Being Recovered Section - Show first if owner has active recoveries */}
-          {myDiscsBeingRecovered.length > 0 && (
+          {loadingMyDiscs && (
+            <RNView style={[styles.ownerRecoverySection, { borderColor: isDark ? '#444' : '#F39C12' }]}>
+              <RNView style={styles.ownerRecoverySectionHeader}>
+                <FontAwesome name="bell" size={20} color="#F39C12" />
+                <Text style={styles.ownerRecoverySectionTitle}>Your Discs Were Found!</Text>
+              </RNView>
+              <Text style={styles.ownerRecoverySectionSubtitle}>
+                Checking for active recoveries...
+              </Text>
+              <RecoveryCardSkeleton />
+              <RecoveryCardSkeleton />
+            </RNView>
+          )}
+          {!loadingMyDiscs && myDiscsBeingRecovered.length > 0 && (
             <RNView style={[styles.ownerRecoverySection, { borderColor: isDark ? '#444' : '#F39C12' }]}>
               <RNView style={styles.ownerRecoverySectionHeader}>
                 <FontAwesome name="bell" size={20} color="#F39C12" />
@@ -564,7 +578,17 @@ export default function FoundDiscScreen() {
           </Pressable>
 
           {/* Pending Returns Section */}
-          {pendingRecoveries.length > 0 && (
+          {loadingPending && (
+            <View style={styles.pendingSection}>
+              <Text style={styles.pendingSectionTitle}>Your Pending Returns</Text>
+              <Text style={styles.pendingSectionSubtitle}>
+                Loading your found discs...
+              </Text>
+              <RecoveryCardSkeleton />
+              <RecoveryCardSkeleton />
+            </View>
+          )}
+          {!loadingPending && pendingRecoveries.length > 0 && (
             <View style={styles.pendingSection}>
               <Text style={styles.pendingSectionTitle}>Your Pending Returns</Text>
               <Text style={styles.pendingSectionSubtitle}>

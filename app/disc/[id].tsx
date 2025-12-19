@@ -18,6 +18,7 @@ import QRCode from 'react-native-qrcode-svg';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { useColorScheme } from '@/components/useColorScheme';
+import { DiscDetailSkeleton } from '@/components/Skeleton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -61,6 +62,7 @@ interface Disc {
   name: string;
   manufacturer?: string;
   mold?: string;
+  category?: string;
   plastic?: string;
   weight?: number;
   color?: string;
@@ -107,20 +109,27 @@ export default function DiscDetailScreen() {
   const [permission, requestPermission] = useCameraPermissions();
 
   useLayoutEffect(() => {
-    if (disc) {
-      navigation.setOptions({
-        title: disc.mold || disc.name,
-        headerBackTitle: 'My Bag',
-        headerRight: () => (
-          <Pressable
-            onPress={() => router.push(`/edit-disc/${disc.id}`)}
-            hitSlop={8}
-            style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
-            <FontAwesome name="edit" size={18} color={Colors.violet.primary} />
-          </Pressable>
-        ),
-      });
-    }
+    navigation.setOptions({
+      headerBackTitle: 'Back',
+      title: disc ? (disc.mold || disc.name) : 'Disc Details',
+      headerLeft: () => (
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
+          style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 8 }}>
+          <FontAwesome name="angle-left" size={28} color={Colors.violet.primary} style={{ marginRight: 6 }} />
+          <Text style={{ color: Colors.violet.primary, fontSize: 17 }}>Back</Text>
+        </Pressable>
+      ),
+      headerRight: disc ? () => (
+        <Pressable
+          onPress={() => router.push(`/edit-disc/${disc.id}`)}
+          hitSlop={8}
+          style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+          <FontAwesome name="edit" size={18} color={Colors.violet.primary} />
+        </Pressable>
+      ) : undefined,
+    });
   }, [disc, navigation, router]);
 
   useFocusEffect(
@@ -465,9 +474,9 @@ export default function DiscDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.violet.primary} />
-      </View>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <DiscDetailSkeleton />
+      </ScrollView>
     );
   }
 
@@ -547,6 +556,13 @@ export default function DiscDetailScreen() {
 
         {/* Details Grid */}
         <View style={styles.detailsGrid}>
+          {disc.category && (
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Type</Text>
+              <Text style={styles.detailValue}>{disc.category}</Text>
+            </View>
+          )}
+
           {disc.plastic && (
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Plastic</Text>

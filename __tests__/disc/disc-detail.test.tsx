@@ -115,15 +115,17 @@ describe('DiscDetailScreen', () => {
     });
   });
 
-  it('shows loading indicator initially', async () => {
+  it('shows skeleton loaders initially', async () => {
     (global.fetch as jest.Mock).mockImplementation(() =>
       new Promise(() => {}) // Never resolves to keep loading
     );
 
-    const { UNSAFE_getByType } = render(<DiscDetailScreen />);
+    const { UNSAFE_getAllByType } = render(<DiscDetailScreen />);
 
-    const ActivityIndicator = require('react-native').ActivityIndicator;
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    // Should show skeleton components (which use Animated.View)
+    const Animated = require('react-native').Animated;
+    const skeletons = UNSAFE_getAllByType(Animated.View);
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('displays disc details from API', async () => {

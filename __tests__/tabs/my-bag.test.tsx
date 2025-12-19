@@ -106,16 +106,18 @@ describe('MyBagScreen', () => {
     });
   });
 
-  it('shows loading indicator initially', async () => {
+  it('shows skeleton loaders initially', async () => {
     (global.fetch as jest.Mock).mockImplementation(() =>
       new Promise(() => {}) // Never resolves to keep loading
     );
 
-    const { getByTestId, UNSAFE_getByType } = render(<MyBagScreen />);
+    const { UNSAFE_getAllByType } = render(<MyBagScreen />);
 
-    // Should show ActivityIndicator
-    const ActivityIndicator = require('react-native').ActivityIndicator;
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    // Should show DiscCardSkeleton components (which use Animated.View)
+    const Animated = require('react-native').Animated;
+    const skeletons = UNSAFE_getAllByType(Animated.View);
+    // There should be multiple Animated.View elements from the skeletons
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('shows empty state when no discs', async () => {

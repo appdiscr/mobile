@@ -13,6 +13,7 @@ import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
+import { OrderCardSkeleton } from '@/components/Skeleton';
 
 interface StickerOrder {
   id: string;
@@ -193,8 +194,12 @@ export default function MyOrdersScreen() {
     return (
       <>
         <Stack.Screen options={{ title: 'My Orders' }} />
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={Colors.violet.primary} />
+        <View style={[styles.container, dynamicStyles.container]}>
+          <View style={styles.listContent}>
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+          </View>
         </View>
       </>
     );

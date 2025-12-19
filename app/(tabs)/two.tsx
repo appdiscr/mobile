@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
 import { compressImage } from '@/utils/imageCompression';
+import { RecoveryCardSkeleton, FormFieldSkeleton, Skeleton } from '@/components/Skeleton';
 
 type DisplayPreference = 'username' | 'full_name';
 
@@ -859,9 +860,10 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>My Discs Being Recovered</Text>
             {loadingRecoveries ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={Colors.violet.primary} />
-              </View>
+              <>
+                <RecoveryCardSkeleton />
+                <RecoveryCardSkeleton />
+              </>
             ) : (
               activeRecoveries.map((recovery) => {
                 const statusInfo = getRecoveryStatusInfo(recovery.status);
@@ -904,9 +906,10 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Discs I Found</Text>
             {loadingFinds ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={Colors.violet.primary} />
-              </View>
+              <>
+                <RecoveryCardSkeleton />
+                <RecoveryCardSkeleton />
+              </>
             ) : (
               myFinds.map((recovery) => {
                 const statusInfo = getRecoveryStatusInfo(recovery.status);

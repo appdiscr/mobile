@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   View as RNView,
+  useColorScheme,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text, View } from '@/components/Themed';
@@ -15,6 +16,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { getCachedDiscs, setCachedDiscs, isCacheStale } from '@/utils/discCache';
+import { DiscCardSkeleton } from '@/components/Skeleton';
 
 interface FlightNumbers {
   speed: number | null;
@@ -80,6 +82,8 @@ const COLOR_MAP: Record<string, string> = {
 
 export default function MyBagScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [discs, setDiscs] = useState<Disc[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -268,8 +272,14 @@ export default function MyBagScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.violet.primary} />
+      <View style={styles.container}>
+        <View style={styles.listContent}>
+          <DiscCardSkeleton />
+          <DiscCardSkeleton />
+          <DiscCardSkeleton />
+          <DiscCardSkeleton />
+          <DiscCardSkeleton />
+        </View>
       </View>
     );
   }
@@ -277,19 +287,27 @@ export default function MyBagScreen() {
   const renderProtectDiscsBanner = () => {
     if (discs.length === 0) return null;
 
+    const bannerStyles = {
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : Colors.violet[50],
+      borderColor: isDark ? 'rgba(139, 92, 246, 0.3)' : Colors.violet[100],
+    };
+
+    const iconBgColor = isDark ? 'rgba(139, 92, 246, 0.2)' : '#fff';
+    const subtitleColor = isDark ? '#aaa' : '#666';
+
     return (
-      <Pressable style={styles.protectBanner} onPress={() => router.push('/order-stickers')}>
+      <Pressable style={[styles.protectBanner, bannerStyles]} onPress={() => router.push('/order-stickers')}>
         <RNView style={styles.protectBannerContent}>
-          <RNView style={styles.protectBannerIcon}>
+          <RNView style={[styles.protectBannerIcon, { backgroundColor: iconBgColor }]}>
             <FontAwesome name="shield" size={18} color={Colors.violet.primary} />
           </RNView>
           <RNView style={styles.protectBannerText}>
             <Text style={styles.protectBannerTitle}>Protect Your Collection</Text>
-            <Text style={styles.protectBannerSubtitle}>
+            <Text style={[styles.protectBannerSubtitle, { color: subtitleColor }]}>
               Add QR stickers to help finders contact you
             </Text>
           </RNView>
-          <FontAwesome name="chevron-right" size={14} color="#999" />
+          <FontAwesome name="chevron-right" size={14} color={isDark ? '#888' : '#999'} />
         </RNView>
       </Pressable>
     );
