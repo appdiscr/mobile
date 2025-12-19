@@ -86,7 +86,7 @@ describe('AddDiscScreen', () => {
   it('renders form correctly', () => {
     const { getByText, getByPlaceholderText } = render(<AddDiscScreen />);
 
-    expect(getByText('Add Disc to Your Bag')).toBeTruthy();
+    // Title is rendered by Stack.Screen in _layout.tsx, not in the component itself
     expect(getByText('Manufacturer')).toBeTruthy();
     expect(getByText('Plastic')).toBeTruthy();
     expect(getByText('Weight (grams)')).toBeTruthy();
