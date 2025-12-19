@@ -115,11 +115,7 @@ export default function DiscDetailScreen() {
           <Pressable
             onPress={() => router.push(`/edit-disc/${disc.id}`)}
             hitSlop={8}
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 8,
-            }}>
+            style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
             <FontAwesome name="edit" size={18} color={Colors.violet.primary} />
           </Pressable>
         ),
