@@ -45,6 +45,36 @@ jest.mock('../../components/CameraWithOverlay', () => 'CameraWithOverlay');
 // Mock ImageCropperWithCircle
 jest.mock('../../components/ImageCropperWithCircle', () => 'ImageCropperWithCircle');
 
+// Mock PlasticPicker - render as simple TextInput
+jest.mock('../../components/PlasticPicker', () => ({
+  PlasticPicker: ({ value, onChange, textColor }: any) => {
+    const { TextInput } = require('react-native');
+    return (
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="e.g., Star"
+        style={{ color: textColor }}
+      />
+    );
+  },
+}));
+
+// Mock CategoryPicker - render as simple TextInput
+jest.mock('../../components/CategoryPicker', () => ({
+  CategoryPicker: ({ value, onChange, textColor }: any) => {
+    const { TextInput } = require('react-native');
+    return (
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="Select disc type"
+        style={{ color: textColor }}
+      />
+    );
+  },
+}));
+
 describe('EditDiscScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
