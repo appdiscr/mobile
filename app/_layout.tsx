@@ -162,8 +162,19 @@ function RootLayoutNav() {
             presentation: 'modal',
             title: 'Add Disc',
             headerRight: () => (
-              <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
-                <FontAwesome name="times" size={22} color={colorScheme === 'dark' ? '#999' : '#666'} />
+              <Pressable
+                onPress={() => navigation.goBack()}
+                hitSlop={8}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  backgroundColor: colorScheme === 'dark' ? '#333' : '#e5e5e5',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FontAwesome name="times" size={16} color={colorScheme === 'dark' ? '#999' : '#666'} />
               </Pressable>
             ),
           })}
