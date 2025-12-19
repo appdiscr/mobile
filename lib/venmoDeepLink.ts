@@ -25,20 +25,25 @@ export interface VenmoPaymentParams {
 
 /**
  * Generates the payment note for Venmo
+ * Includes thank you messaging to make it feel like a gift/reward
  */
 export const generatePaymentNote = (discName?: string): string => {
   if (discName) {
-    return `🥏 ${discName} Returned via AceBack`;
+    return `🎁 Thank you for returning my ${discName}! 🥏`;
   }
-  return '🥏 Disc Returned via AceBack';
+  return '🎁 Thank you for returning my disc! 🥏';
 };
 
 /**
  * Generates the Venmo app deep link URL
+ * Note: For app deep links, we encode but then convert %20 back to spaces
+ * as Venmo's app handles literal spaces better than encoded ones
  */
 export const getVenmoAppUrl = (params: VenmoPaymentParams): string => {
   const { recipientUsername, amount, discName, customNote } = params;
-  const note = encodeURIComponent(customNote || generatePaymentNote(discName));
+  const rawNote = customNote || generatePaymentNote(discName);
+  // Encode first, then replace %20 with actual spaces for the app deep link
+  const note = encodeURIComponent(rawNote).replace(/%20/g, ' ');
   // Remove @ if user included it
   const username = recipientUsername.replace(/^@/, '');
 

@@ -28,17 +28,17 @@ describe('venmoDeepLink', () => {
   describe('generatePaymentNote', () => {
     it('generates note with disc name', () => {
       const note = generatePaymentNote('Destroyer');
-      expect(note).toBe('🥏 Destroyer Returned via AceBack');
+      expect(note).toBe('🎁 Thank you for returning my Destroyer! 🥏');
     });
 
     it('generates generic note without disc name', () => {
       const note = generatePaymentNote();
-      expect(note).toBe('🥏 Disc Returned via AceBack');
+      expect(note).toBe('🎁 Thank you for returning my disc! 🥏');
     });
 
     it('generates generic note with undefined disc name', () => {
       const note = generatePaymentNote(undefined);
-      expect(note).toBe('🥏 Disc Returned via AceBack');
+      expect(note).toBe('🎁 Thank you for returning my disc! 🥏');
     });
   });
 
@@ -49,9 +49,9 @@ describe('venmoDeepLink', () => {
         amount: 10,
         discName: 'Destroyer',
       });
-      expect(url).toBe(
-        'venmo://paycharge?txn=pay&recipients=John-Doe-5&amount=10&note=%F0%9F%A5%8F%20Destroyer%20Returned%20via%20AceBack'
-      );
+      // App URL uses spaces instead of %20 for better Venmo compatibility
+      expect(url).toContain('venmo://paycharge?txn=pay&recipients=John-Doe-5&amount=10&note=');
+      expect(url).toContain('Thank you for returning my Destroyer');
     });
 
     it('strips @ from username', () => {
@@ -69,7 +69,8 @@ describe('venmoDeepLink', () => {
         amount: 5,
         customNote: 'Custom payment note',
       });
-      expect(url).toContain('note=Custom%20payment%20note');
+      // Spaces are preserved in app URL
+      expect(url).toContain('note=Custom payment note');
     });
 
     it('handles decimal amounts', () => {
@@ -88,9 +89,9 @@ describe('venmoDeepLink', () => {
         amount: 10,
         discName: 'Valkyrie',
       });
-      expect(url).toBe(
-        'https://venmo.com/?txn=pay&recipients=John-Doe-5&amount=10&note=%F0%9F%A5%8F%20Valkyrie%20Returned%20via%20AceBack'
-      );
+      // Web URL uses proper encoding
+      expect(url).toContain('https://venmo.com/?txn=pay&recipients=John-Doe-5&amount=10&note=');
+      expect(url).toContain('Thank%20you%20for%20returning%20my%20Valkyrie');
     });
 
     it('strips @ from username', () => {
