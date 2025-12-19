@@ -21,6 +21,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CameraWithOverlay from '@/components/CameraWithOverlay';
 import ImageCropperWithCircle from '@/components/ImageCropperWithCircle';
 import { DiscAutocomplete } from '@/components/DiscAutocomplete';
+import { PlasticPicker } from '@/components/PlasticPicker';
+import { CategoryPicker } from '@/components/CategoryPicker';
 import { CatalogDisc } from '@/hooks/useDiscCatalogSearch';
 
 interface FlightNumbers {
@@ -43,6 +45,7 @@ interface Disc {
   name: string;
   manufacturer?: string;
   mold?: string;
+  category?: string;
   plastic?: string;
   weight?: number;
   color?: string;
@@ -78,6 +81,7 @@ export default function EditDiscScreen() {
   // Form fields
   const [manufacturer, setManufacturer] = useState('');
   const [mold, setMold] = useState('');
+  const [category, setCategory] = useState('');
   const [plastic, setPlastic] = useState('');
   const [weight, setWeight] = useState('');
   const [color, setColor] = useState('');
@@ -102,6 +106,12 @@ export default function EditDiscScreen() {
   const handleDiscSelected = useCallback((disc: CatalogDisc) => {
     setMold(disc.mold);
     setManufacturer(disc.manufacturer);
+
+    // Auto-fill category if available
+    if (disc.category) setCategory(disc.category);
+
+    // Clear plastic since manufacturer may have changed
+    setPlastic('');
 
     // Auto-fill flight numbers if available
     if (disc.speed !== null) setSpeed(disc.speed.toString());
@@ -158,6 +168,7 @@ export default function EditDiscScreen() {
       // Populate form fields
       const manufacturerValue = disc.manufacturer || '';
       const moldValue = disc.mold || '';
+      const categoryValue = disc.category || '';
       const plasticValue = disc.plastic || '';
       const weightValue = disc.weight ? disc.weight.toString() : '';
       const colorValue = disc.color || '';
@@ -175,6 +186,7 @@ export default function EditDiscScreen() {
       console.log('Setting form values:', {
         manufacturer: manufacturerValue,
         mold: moldValue,
+        category: categoryValue,
         plastic: plasticValue,
         weight: weightValue,
         color: colorValue,
@@ -189,6 +201,7 @@ export default function EditDiscScreen() {
 
       setManufacturer(manufacturerValue);
       setMold(moldValue);
+      setCategory(categoryValue);
       setPlastic(plasticValue);
       setWeight(weightValue);
       setColor(colorValue);
@@ -372,6 +385,7 @@ export default function EditDiscScreen() {
         disc_id: id,
         mold: mold.trim(),
         manufacturer: manufacturer.trim() || undefined,
+        category: category.trim() || undefined,
         plastic: plastic.trim() || undefined,
         weight: weight ? parseInt(weight, 10) : undefined,
         color: color.trim() || undefined,
@@ -513,21 +527,34 @@ export default function EditDiscScreen() {
             <TextInput
               style={[styles.input, { color: textColor }]}
               value={manufacturer}
-              onChangeText={setManufacturer}
+              onChangeText={(text) => {
+                setManufacturer(text);
+                // Clear plastic when manufacturer changes
+                setPlastic('');
+              }}
               placeholder="e.g., Innova"
               placeholderTextColor="#999"
+            />
+          </View>
+
+          {/* Category/Type */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Disc Type</Text>
+            <CategoryPicker
+              value={category}
+              onChange={setCategory}
+              textColor={textColor}
             />
           </View>
 
           {/* Plastic */}
           <View style={styles.field}>
             <Text style={styles.label}>Plastic</Text>
-            <TextInput
-              style={[styles.input, { color: textColor }]}
+            <PlasticPicker
               value={plastic}
-              onChangeText={setPlastic}
-              placeholder="e.g., Star"
-              placeholderTextColor="#999"
+              onChange={setPlastic}
+              manufacturer={manufacturer}
+              textColor={textColor}
             />
           </View>
 

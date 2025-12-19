@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
 import { Image } from 'expo-image';
 import Colors from '@/constants/Colors';
 
@@ -11,7 +11,7 @@ interface AvatarProps {
   /** Size of the avatar in pixels (default: 40) */
   size?: number;
   /** Custom style to apply to the container */
-  style?: ViewStyle;
+  style?: ViewStyle | ImageStyle;
 }
 
 /**
@@ -52,7 +52,7 @@ export function Avatar({ avatarUrl, name, size = 40, style }: AvatarProps) {
     return (
       <Image
         source={{ uri: avatarUrl }}
-        style={[styles.image, containerStyle, style]}
+        style={[styles.image, containerStyle, style as ImageStyle]}
         onError={() => setImageError(true)}
         cachePolicy="memory-disk"
         transition={200}

@@ -3,7 +3,21 @@ import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { AuthProvider, useAuth } from './AuthContext';
 import { supabase } from '@/lib/supabase';
 
-jest.mock('@/lib/supabase');
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(),
+      signInWithPassword: jest.fn(),
+      signUp: jest.fn(),
+      signInWithOAuth: jest.fn(),
+      signOut: jest.fn(),
+    },
+    functions: {
+      invoke: jest.fn(),
+    },
+  },
+}));
 
 // Mock expo-linking
 jest.mock('expo-linking', () => ({
@@ -29,7 +43,13 @@ jest.mock('expo-device', () => ({
   isDevice: true,
 }));
 
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockGetSession = supabase.auth.getSession as jest.Mock;
+const mockOnAuthStateChange = supabase.auth.onAuthStateChange as jest.Mock;
+const mockSignInWithPassword = supabase.auth.signInWithPassword as jest.Mock;
+const mockSignUp = supabase.auth.signUp as jest.Mock;
+const mockSignInWithOAuth = supabase.auth.signInWithOAuth as jest.Mock;
+const mockSignOut = supabase.auth.signOut as jest.Mock;
+const mockInvoke = supabase.functions.invoke as jest.Mock;
 
 const mockSession = {
   access_token: 'test-access-token',
@@ -43,18 +63,16 @@ describe('AuthContext', () => {
   });
 
   const setupMocks = (session: any = null) => {
-    mockSupabase.auth.getSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       data: { session },
       error: null,
     });
 
-    mockSupabase.auth.onAuthStateChange.mockReturnValue({
+    mockOnAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: jest.fn() } },
     });
 
-    mockSupabase.functions = {
-      invoke: jest.fn().mockResolvedValue({ data: {}, error: null }),
-    } as any;
+    mockInvoke.mockResolvedValue({ data: {}, error: null });
   };
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -105,10 +123,10 @@ describe('AuthContext', () => {
   describe('signIn', () => {
     it('should call signInWithPassword with email and password', async () => {
       setupMocks();
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSignInWithPassword.mockResolvedValue({
         data: { session: mockSession, user: mockSession.user },
         error: null,
-      } as any);
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -120,7 +138,7 @@ describe('AuthContext', () => {
         await result.current.signIn('test@example.com', 'password123');
       });
 
-      expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      expect(mockSignInWithPassword).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
       });
@@ -129,10 +147,10 @@ describe('AuthContext', () => {
     it('should return error when signIn fails', async () => {
       setupMocks();
       const mockError = new Error('Invalid credentials');
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      mockSignInWithPassword.mockResolvedValue({
         data: { session: null, user: null },
         error: mockError,
-      } as any);
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -152,10 +170,10 @@ describe('AuthContext', () => {
   describe('signUp', () => {
     it('should call signUp with email and password', async () => {
       setupMocks();
-      mockSupabase.auth.signUp.mockResolvedValue({
+      mockSignUp.mockResolvedValue({
         data: { session: null, user: mockSession.user },
         error: null,
-      } as any);
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -167,7 +185,7 @@ describe('AuthContext', () => {
         await result.current.signUp('new@example.com', 'password123');
       });
 
-      expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
+      expect(mockSignUp).toHaveBeenCalledWith({
         email: 'new@example.com',
         password: 'password123',
       });
@@ -176,10 +194,10 @@ describe('AuthContext', () => {
     it('should return error when signUp fails', async () => {
       setupMocks();
       const mockError = new Error('Email already in use');
-      mockSupabase.auth.signUp.mockResolvedValue({
+      mockSignUp.mockResolvedValue({
         data: { session: null, user: null },
         error: mockError,
-      } as any);
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -199,10 +217,10 @@ describe('AuthContext', () => {
   describe('signInWithGoogle', () => {
     it('should call signInWithOAuth with google provider', async () => {
       setupMocks();
-      mockSupabase.auth.signInWithOAuth.mockResolvedValue({
+      mockSignInWithOAuth.mockResolvedValue({
         data: { provider: 'google', url: 'https://google.com/oauth' },
         error: null,
-      } as any);
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -214,7 +232,7 @@ describe('AuthContext', () => {
         await result.current.signInWithGoogle();
       });
 
-      expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      expect(mockSignInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
         options: {
           redirectTo: 'com.aceback.app://',
@@ -225,10 +243,10 @@ describe('AuthContext', () => {
     it('should return error when Google sign in fails', async () => {
       setupMocks();
       const mockError = new Error('OAuth error');
-      mockSupabase.auth.signInWithOAuth.mockResolvedValue({
+      mockSignInWithOAuth.mockResolvedValue({
         data: { provider: null, url: null },
         error: mockError,
-      } as any);
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -248,7 +266,7 @@ describe('AuthContext', () => {
   describe('signOut', () => {
     it('should call signOut when signOut is invoked', async () => {
       setupMocks(mockSession);
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockSignOut.mockResolvedValue({
         error: null,
       });
 
@@ -262,12 +280,12 @@ describe('AuthContext', () => {
         await result.current.signOut();
       });
 
-      expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      expect(mockSignOut).toHaveBeenCalled();
     });
 
     it('should clear session and user even if signOut fails', async () => {
       setupMocks(mockSession);
-      mockSupabase.auth.signOut.mockRejectedValue(new Error('Network error'));
+      mockSignOut.mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
