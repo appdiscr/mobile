@@ -259,6 +259,53 @@ const styles = StyleSheet.create({
 
 **DO NOT hardcode colors. Always use the dynamic styles pattern above.**
 
+### Sentry Error Tracking - MANDATORY
+
+**CRITICAL:** All new code MUST use Sentry for error tracking.
+
+**Sentry is already initialized in `app/_layout.tsx` via `lib/sentry.ts`.**
+
+**Required pattern for catch blocks:**
+
+```typescript
+import { Sentry } from '@/lib/sentry';
+
+try {
+  // API call or risky operation
+  const { data, error } = await supabase.from('table').select('*');
+  if (error) throw error;
+  // ...
+} catch (error) {
+  Sentry.captureException(error, {
+    extra: { operation: 'operation-name', id: someId },
+  });
+  Alert.alert('Error', 'Something went wrong');
+}
+```
+
+**User context - set after authentication:**
+
+```typescript
+import { Sentry } from '@/lib/sentry';
+
+// After successful sign-in:
+Sentry.setUser({ id: user.id, email: user.email });
+
+// On sign-out:
+Sentry.setUser(null);
+```
+
+**Key points:**
+
+- Error boundary is exported from `@sentry/react-native` in `_layout.tsx`
+- Use `captureException()` in catch blocks with relevant context
+- Include operation name and IDs for debugging
+- Tests mock Sentry - no real errors sent during tests
+
+**Environment variable:**
+
+- `EXPO_PUBLIC_SENTRY_DSN` - Sentry DSN (set in `.env`)
+
 ### Supabase Integration
 
 - Never commit actual credentials to git
@@ -311,7 +358,7 @@ useProtectedRoute checks user state
 
 ---
 
-**Last Updated:** 2025-12-16
+**Last Updated:** 2025-12-19
 
 This file should be updated whenever:
 
