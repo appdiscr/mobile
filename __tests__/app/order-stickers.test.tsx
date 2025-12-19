@@ -50,6 +50,15 @@ describe('OrderStickersScreen', () => {
           json: () => Promise.resolve(null),
         });
       }
+      if (url.includes('validate-address')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            valid: true,
+            // No standardized = address is valid as-is
+          }),
+        });
+      }
       if (url.includes('save-default-address')) {
         return Promise.resolve({
           ok: true,
@@ -320,7 +329,7 @@ describe('OrderStickersScreen', () => {
       fireEvent.press(getByText(/Pay \$/));
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Missing Information', 'Postal code is required');
+        expect(Alert.alert).toHaveBeenCalledWith('Missing Information', 'ZIP code is required');
       });
     });
   });
@@ -370,6 +379,12 @@ describe('OrderStickersScreen', () => {
             }),
           });
         }
+        if (url.includes('validate-address')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ valid: true }),
+          });
+        }
         if (url.includes('create-sticker-order')) {
           return Promise.resolve({
             ok: true,
@@ -400,6 +415,12 @@ describe('OrderStickersScreen', () => {
 
       // Reset mock to track calls
       mockFetch.mockImplementation((url: string) => {
+        if (url.includes('validate-address')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ valid: true }),
+          });
+        }
         if (url.includes('create-sticker-order')) {
           return Promise.resolve({
             ok: true,
@@ -438,6 +459,12 @@ describe('OrderStickersScreen', () => {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve(null),
+          });
+        }
+        if (url.includes('validate-address')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ valid: true }),
           });
         }
         if (url.includes('save-default-address')) {

@@ -12,12 +12,14 @@ import {
   View as RNView,
   useColorScheme,
   InputAccessoryView,
+  Modal,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Text, View } from '@/components/Themed';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
+import { validateShippingAddress, ShippingAddress as ValidationAddress } from '@/lib/validation';
 
 const UNIT_PRICE_CENTS = 100; // $1.00 per sticker
 const MIN_QUANTITY = 1;
@@ -54,6 +56,11 @@ export default function OrderStickersScreen() {
     postal_code: '',
     country: 'US',
   });
+  const [validatingAddress, setValidatingAddress] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [suggestedAddress, setSuggestedAddress] = useState<ShippingAddress | null>(null);
+  const [addressErrors, setAddressErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Fetch default address on mount
   useEffect(() => {
@@ -190,6 +197,22 @@ export default function OrderStickersScreen() {
     checkboxLabel: {
       color: isDark ? '#ccc' : '#333',
     },
+    modalOverlay: {
+      backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+      backgroundColor: isDark ? '#1a1a1a' : '#fff',
+    },
+    modalText: {
+      color: isDark ? '#ccc' : '#333',
+    },
+    addressCard: {
+      backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+      borderColor: isDark ? '#333' : '#ddd',
+    },
+    errorText: {
+      color: '#e74c3c',
+    },
   };
 
   const incrementQuantity = () => {
@@ -204,22 +227,91 @@ export default function OrderStickersScreen() {
     }
   };
 
-  const validateAddress = (): string | null => {
-    if (!address.name.trim()) return 'Name is required';
-    if (!address.street_address.trim()) return 'Street address is required';
-    if (!address.city.trim()) return 'City is required';
-    if (!address.state.trim()) return 'State is required';
-    if (!address.postal_code.trim()) return 'Postal code is required';
-    return null;
+  // Client-side validation using our validation library
+  const validateAddressClient = (): Record<string, string> => {
+    return validateShippingAddress(address as ValidationAddress);
   };
 
-  const handleCheckout = async () => {
-    const validationError = validateAddress();
-    if (validationError) {
-      Alert.alert('Missing Information', validationError);
-      return;
-    }
+  // USPS API validation
+  const validateAddressWithUSPS = async (
+    accessToken: string
+  ): Promise<{
+    valid: boolean;
+    standardized?: ShippingAddress;
+    errors?: string[];
+  }> => {
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/validate-address`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            street_address: address.street_address.trim(),
+            street_address_2: address.street_address_2.trim() || undefined,
+            city: address.city.trim(),
+            state: address.state.trim().toUpperCase(),
+            postal_code: address.postal_code.trim(),
+          }),
+        }
+      );
 
+      if (!response.ok) {
+        // API error - let user proceed with unvalidated address
+        console.error('USPS validation API error:', response.status);
+        return { valid: true };
+      }
+
+      const data = await response.json();
+
+      if (!data.valid) {
+        // Address is invalid
+        return {
+          valid: false,
+          errors: data.errors || ['Address could not be validated'],
+        };
+      }
+
+      // Address is valid
+      if (data.standardized) {
+        // Check if address was corrected
+        const standardized: ShippingAddress = {
+          name: address.name, // Keep original name
+          street_address: data.standardized.street_address,
+          street_address_2: '', // USPS combines into street_address
+          city: data.standardized.city,
+          state: data.standardized.state,
+          postal_code: data.standardized.postal_code,
+          country: 'US',
+        };
+
+        // Check if any fields changed
+        const changed =
+          standardized.street_address !== address.street_address.trim().toUpperCase() ||
+          standardized.city !== address.city.trim().toUpperCase() ||
+          standardized.state !== address.state.trim().toUpperCase() ||
+          standardized.postal_code !== address.postal_code.trim();
+
+        return {
+          valid: true,
+          standardized: changed ? standardized : undefined,
+        };
+      }
+
+      // Valid with no corrections needed
+      return { valid: true };
+    } catch (error) {
+      console.error('USPS validation error:', error);
+      // Network error - let user proceed
+      return { valid: true };
+    }
+  };
+
+  // Proceed with checkout after address is validated/confirmed
+  const proceedWithCheckout = async (addressToUse: ShippingAddress) => {
     setLoading(true);
 
     try {
@@ -229,6 +321,7 @@ export default function OrderStickersScreen() {
 
       if (!session) {
         Alert.alert('Error', 'Please sign in to place an order');
+        setLoading(false);
         return;
       }
 
@@ -245,13 +338,13 @@ export default function OrderStickersScreen() {
               },
               body: JSON.stringify({
                 address_id: defaultAddressId, // Update existing if we have one
-                name: address.name.trim(),
-                street_address: address.street_address.trim(),
-                street_address_2: address.street_address_2.trim() || undefined,
-                city: address.city.trim(),
-                state: address.state.trim(),
-                postal_code: address.postal_code.trim(),
-                country: address.country,
+                name: addressToUse.name.trim(),
+                street_address: addressToUse.street_address.trim(),
+                street_address_2: addressToUse.street_address_2?.trim() || undefined,
+                city: addressToUse.city.trim(),
+                state: addressToUse.state.trim(),
+                postal_code: addressToUse.postal_code.trim(),
+                country: addressToUse.country,
               }),
             }
           );
@@ -277,13 +370,13 @@ export default function OrderStickersScreen() {
           body: JSON.stringify({
             quantity,
             shipping_address: {
-              name: address.name.trim(),
-              street_address: address.street_address.trim(),
-              street_address_2: address.street_address_2.trim(),
-              city: address.city.trim(),
-              state: address.state.trim(),
-              postal_code: address.postal_code.trim(),
-              country: address.country,
+              name: addressToUse.name.trim(),
+              street_address: addressToUse.street_address.trim(),
+              street_address_2: addressToUse.street_address_2?.trim() || '',
+              city: addressToUse.city.trim(),
+              state: addressToUse.state.trim(),
+              postal_code: addressToUse.postal_code.trim(),
+              country: addressToUse.country,
             },
           }),
         }
@@ -321,6 +414,80 @@ export default function OrderStickersScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCheckout = async () => {
+    // Step 1: Client-side validation
+    const clientErrors = validateAddressClient();
+    if (Object.keys(clientErrors).length > 0) {
+      setFieldErrors(clientErrors);
+      const firstError = Object.values(clientErrors)[0];
+      Alert.alert('Missing Information', firstError);
+      return;
+    }
+    setFieldErrors({});
+
+    setValidatingAddress(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        Alert.alert('Error', 'Please sign in to place an order');
+        return;
+      }
+
+      // Step 2: USPS validation
+      const uspsResult = await validateAddressWithUSPS(session.access_token);
+
+      if (!uspsResult.valid) {
+        // Invalid address - show errors
+        setAddressErrors(uspsResult.errors || ['Address could not be validated']);
+        setShowAddressModal(true);
+        return;
+      }
+
+      if (uspsResult.standardized) {
+        // Address was corrected - show modal with suggestion
+        setSuggestedAddress(uspsResult.standardized);
+        setAddressErrors([]);
+        setShowAddressModal(true);
+        return;
+      }
+
+      // Address is valid and matches - proceed with checkout
+      await proceedWithCheckout(address);
+    } catch (error) {
+      console.error('Validation error:', error);
+      // On error, proceed with original address
+      await proceedWithCheckout(address);
+    } finally {
+      setValidatingAddress(false);
+    }
+  };
+
+  // Handle user accepting the suggested address
+  const handleAcceptSuggestion = async () => {
+    if (suggestedAddress) {
+      setAddress(suggestedAddress);
+      setShowAddressModal(false);
+      await proceedWithCheckout(suggestedAddress);
+    }
+  };
+
+  // Handle user keeping their original address
+  const handleKeepOriginal = async () => {
+    setShowAddressModal(false);
+    await proceedWithCheckout(address);
+  };
+
+  // Handle closing the error modal
+  const handleCloseModal = () => {
+    setShowAddressModal(false);
+    setSuggestedAddress(null);
+    setAddressErrors([]);
   };
 
   return (
@@ -515,12 +682,17 @@ export default function OrderStickersScreen() {
         {/* Checkout Button */}
         <RNView style={[styles.checkoutContainer, dynamicStyles.checkoutContainer]}>
           <Pressable
-            style={[styles.checkoutButton, loading && styles.checkoutButtonDisabled]}
+            style={[styles.checkoutButton, (loading || validatingAddress) && styles.checkoutButtonDisabled]}
             onPress={handleCheckout}
-            disabled={loading}
+            disabled={loading || validatingAddress}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
+            {loading || validatingAddress ? (
+              <>
+                <ActivityIndicator color="#fff" />
+                <Text style={styles.checkoutButtonText}>
+                  {validatingAddress ? 'Validating...' : 'Processing...'}
+                </Text>
+              </>
             ) : (
               <>
                 <FontAwesome name="lock" size={18} color="#fff" />
@@ -577,6 +749,79 @@ export default function OrderStickersScreen() {
           </RNView>
         </InputAccessoryView>
       )}
+
+      {/* Address Validation Modal */}
+      <Modal
+        visible={showAddressModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseModal}
+      >
+        <RNView style={[styles.modalOverlay, dynamicStyles.modalOverlay]}>
+          <RNView style={[styles.modalContent, dynamicStyles.modalContent]}>
+            {addressErrors.length > 0 ? (
+              // Error modal
+              <>
+                <Text style={styles.modalTitle}>Address Issue</Text>
+                <Text style={[styles.modalSubtitle, dynamicStyles.modalText]}>
+                  We couldn't validate this address:
+                </Text>
+                <RNView style={[styles.addressCard, dynamicStyles.addressCard]}>
+                  {addressErrors.map((error, index) => (
+                    <Text key={index} style={[styles.errorItem, dynamicStyles.errorText]}>
+                      {error}
+                    </Text>
+                  ))}
+                </RNView>
+                <Text style={[styles.modalHint, dynamicStyles.modalText]}>
+                  Please check your address and try again.
+                </Text>
+                <Pressable style={styles.modalButtonPrimary} onPress={handleCloseModal}>
+                  <Text style={styles.modalButtonPrimaryText}>Edit Address</Text>
+                </Pressable>
+              </>
+            ) : suggestedAddress ? (
+              // Suggestion modal
+              <>
+                <Text style={styles.modalTitle}>Suggested Address</Text>
+                <Text style={[styles.modalSubtitle, dynamicStyles.modalText]}>
+                  USPS suggests a standardized address:
+                </Text>
+
+                <Text style={[styles.addressLabel, dynamicStyles.modalText]}>You entered:</Text>
+                <RNView style={[styles.addressCard, dynamicStyles.addressCard]}>
+                  <Text style={dynamicStyles.modalText}>{address.street_address}</Text>
+                  {address.street_address_2 ? (
+                    <Text style={dynamicStyles.modalText}>{address.street_address_2}</Text>
+                  ) : null}
+                  <Text style={dynamicStyles.modalText}>
+                    {address.city}, {address.state} {address.postal_code}
+                  </Text>
+                </RNView>
+
+                <Text style={[styles.addressLabel, dynamicStyles.modalText]}>Suggested:</Text>
+                <RNView style={[styles.addressCard, styles.suggestedCard, dynamicStyles.addressCard]}>
+                  <Text style={[dynamicStyles.modalText, styles.suggestedText]}>
+                    {suggestedAddress.street_address}
+                  </Text>
+                  <Text style={[dynamicStyles.modalText, styles.suggestedText]}>
+                    {suggestedAddress.city}, {suggestedAddress.state} {suggestedAddress.postal_code}
+                  </Text>
+                </RNView>
+
+                <Pressable style={styles.modalButtonPrimary} onPress={handleAcceptSuggestion}>
+                  <Text style={styles.modalButtonPrimaryText}>Use Suggested Address</Text>
+                </Pressable>
+                <Pressable style={styles.modalButtonSecondary} onPress={handleKeepOriginal}>
+                  <Text style={[styles.modalButtonSecondaryText, dynamicStyles.modalText]}>
+                    Keep My Address
+                  </Text>
+                </Pressable>
+              </>
+            ) : null}
+          </RNView>
+        </RNView>
+      </Modal>
     </>
   );
 }
@@ -781,6 +1026,84 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.violet.primary,
   },
   checkboxLabel: {
+    fontSize: 14,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalHint: {
+    fontSize: 13,
+    marginVertical: 16,
+    textAlign: 'center',
+  },
+  addressLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+    marginTop: 8,
+    textTransform: 'uppercase',
+  },
+  addressCard: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  suggestedCard: {
+    borderColor: Colors.violet.primary,
+    borderWidth: 2,
+  },
+  suggestedText: {
+    fontWeight: '500',
+  },
+  errorItem: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  modalButtonPrimary: {
+    backgroundColor: Colors.violet.primary,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  modalButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonSecondary: {
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalButtonSecondaryText: {
     fontSize: 14,
   },
 });
