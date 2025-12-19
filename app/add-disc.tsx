@@ -510,6 +510,30 @@ export default function AddDiscScreen() {
             )}
           </View>
 
+          {/* Photos */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Photos (Optional)</Text>
+            <View style={styles.photoGrid}>
+              {photos.map((photo, index) => (
+                <View key={index} style={styles.photoContainer}>
+                  <Image source={{ uri: photo }} style={styles.photoImage} />
+                  <Pressable
+                    style={styles.photoRemoveButton}
+                    onPress={() => removePhoto(index)}>
+                    <FontAwesome name="times-circle" size={24} color="#ff4444" />
+                  </Pressable>
+                </View>
+              ))}
+              {photos.length < 4 && (
+                <Pressable style={styles.photoAddButton} onPress={showPhotoOptions}>
+                  <FontAwesome name="camera" size={32} color="#999" />
+                  <Text style={styles.photoAddText}>Add Photo</Text>
+                </Pressable>
+              )}
+            </View>
+            <Text style={styles.photoHint}>You can add up to 4 photos per disc</Text>
+          </View>
+
           {/* Mold - Required with Autocomplete */}
           <View style={[styles.field, styles.autocompleteField]}>
             <Text style={styles.label}>
@@ -706,30 +730,6 @@ export default function AddDiscScreen() {
               numberOfLines={4}
               textAlignVertical="top"
             />
-          </View>
-
-          {/* Photos */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Photos (Optional)</Text>
-            <View style={styles.photoGrid}>
-              {photos.map((photo, index) => (
-                <View key={index} style={styles.photoContainer}>
-                  <Image source={{ uri: photo }} style={styles.photoImage} />
-                  <Pressable
-                    style={styles.photoRemoveButton}
-                    onPress={() => removePhoto(index)}>
-                    <FontAwesome name="times-circle" size={24} color="#ff4444" />
-                  </Pressable>
-                </View>
-              ))}
-              {photos.length < 4 && (
-                <Pressable style={styles.photoAddButton} onPress={showPhotoOptions}>
-                  <FontAwesome name="camera" size={32} color="#999" />
-                  <Text style={styles.photoAddText}>Add Photo</Text>
-                </Pressable>
-              )}
-            </View>
-            <Text style={styles.photoHint}>You can add up to 4 photos per disc</Text>
           </View>
 
           {/* Buttons */}
