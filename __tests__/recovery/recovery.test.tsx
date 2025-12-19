@@ -86,9 +86,13 @@ describe('RecoveryDetailScreen', () => {
     });
   });
 
-  it('shows loading state initially', () => {
-    const { getByText } = render(<RecoveryDetailScreen />);
-    expect(getByText('Loading recovery details...')).toBeTruthy();
+  it('shows skeleton loaders initially', () => {
+    const { UNSAFE_getAllByType } = render(<RecoveryDetailScreen />);
+
+    // Should show skeleton components (which use Animated.View)
+    const Animated = require('react-native').Animated;
+    const skeletons = UNSAFE_getAllByType(Animated.View);
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('renders recovery details', async () => {
