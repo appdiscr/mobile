@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
-import { Alert, AppState, AppStateStatus } from 'react-native';
+import { Alert, AppState, AppStateStatus, Pressable } from 'react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -156,7 +156,18 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)/forgot-password" options={{ title: 'Forgot Password', headerBackTitle: 'Back' }} />
         <Stack.Screen name="(auth)/reset-password" options={{ title: 'Reset Password', headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="add-disc" options={{ presentation: 'modal', title: 'Add Disc' }} />
+        <Stack.Screen
+          name="add-disc"
+          options={({ navigation }) => ({
+            presentation: 'modal',
+            title: 'Add Disc',
+            headerRight: () => (
+              <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
+                <FontAwesome name="times" size={22} color={colorScheme === 'dark' ? '#999' : '#666'} />
+              </Pressable>
+            ),
+          })}
+        />
         <Stack.Screen name="disc/[id]" options={{ title: 'Disc Details' }} />
         <Stack.Screen name="edit-disc/[id]" options={{ presentation: 'modal', title: 'Edit Disc' }} />
         <Stack.Screen name="recovery/[id]" options={{ title: 'Recovery Details', headerBackTitle: 'Back' }} />
