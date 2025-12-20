@@ -80,6 +80,21 @@ const COLOR_MAP: Record<string, string> = {
   Multi: 'rainbow',
 };
 
+// Two-tone color shades for disc placeholder (lighter, darker)
+const COLOR_SHADES: Record<string, { light: string; dark: string }> = {
+  Red: { light: '#fadbd8', dark: '#c0392b' },
+  Orange: { light: '#fdebd0', dark: '#d35400' },
+  Yellow: { light: '#fcf3cf', dark: '#d4ac0d' },
+  Green: { light: '#d5f5e3', dark: '#1e8449' },
+  Blue: { light: '#d4e6f1', dark: '#2471a3' },
+  Purple: { light: '#e8daef', dark: '#7d3c98' },
+  Pink: { light: '#fadbe8', dark: '#c2185b' },
+  White: { light: '#ffffff', dark: '#ecf0f1' },
+  Black: { light: '#5d6d7e', dark: '#1c2833' },
+  Gray: { light: '#d5d8dc', dark: '#717d7e' },
+  Multi: { light: '#fadbd8', dark: '#d4e6f1' },
+};
+
 export default function MyBagScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -186,15 +201,19 @@ export default function MyBagScreen() {
           router.push(`/disc/${item.id}`);
         }}>
         {/* Photo */}
-        <View style={styles.photoContainer}>
+        <RNView style={styles.photoContainer}>
           {firstPhoto?.photo_url ? (
             <Image source={{ uri: firstPhoto.photo_url }} style={styles.discPhoto} />
+          ) : item.color && COLOR_SHADES[item.color] ? (
+            <RNView style={[styles.twoToneCircle, { backgroundColor: COLOR_SHADES[item.color].light }]}>
+              <RNView style={[styles.twoToneInner, { backgroundColor: COLOR_SHADES[item.color].dark }]} />
+            </RNView>
           ) : (
-            <View style={styles.photoPlaceholder}>
-              <FontAwesome name="circle" size={40} color="#ccc" />
-            </View>
+            <RNView style={styles.photoPlaceholder}>
+              <FontAwesome name="circle-o" size={40} color="#555" />
+            </RNView>
           )}
-        </View>
+        </RNView>
 
         {/* Disc Info */}
         <View style={styles.discInfo}>
@@ -299,7 +318,7 @@ export default function MyBagScreen() {
       <Pressable style={[styles.protectBanner, bannerStyles]} onPress={() => router.push('/order-stickers')}>
         <RNView style={styles.protectBannerContent}>
           <RNView style={[styles.protectBannerIcon, { backgroundColor: iconBgColor }]}>
-            <FontAwesome name="shield" size={18} color={Colors.violet.primary} />
+            <FontAwesome name="shield" size={18} color={isDark ? '#fff' : Colors.violet.primary} />
           </RNView>
           <RNView style={styles.protectBannerText}>
             <Text style={styles.protectBannerTitle}>Protect Your Collection</Text>
@@ -373,9 +392,20 @@ const styles = StyleSheet.create({
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#1a1a1a',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  twoToneCircle: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  twoToneInner: {
+    width: '65%',
+    height: '65%',
+    borderRadius: 100,
   },
   discInfo: {
     flex: 1,

@@ -1,6 +1,6 @@
 # Google OAuth Setup for Expo
 
-This guide explains how to configure Google OAuth for the AceBack mobile app.
+This guide explains how to configure Google OAuth for the Discr mobile app.
 
 ## Overview
 
@@ -31,7 +31,7 @@ Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
 
 1. Select your project (`discr-mvp`)
 1. Go to "Credentials"
-1. Click on your OAuth 2.0 Client ID (`AceBack Web Client`)
+1. Click on your OAuth 2.0 Client ID (`Discr Web Client`)
 1. Under "Authorized redirect URIs", add:
 
    **For Expo Go (Development):**

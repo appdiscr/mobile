@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   View as RNView,
+  Text as RNText,
   Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useNavigation, useFocusEffect } from 'expo-router';
@@ -111,22 +112,23 @@ export default function DiscDetailScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerBackTitle: 'Back',
       title: disc ? (disc.mold || disc.name) : 'Disc Details',
+      headerTintColor: Colors.violet.primary,
+      headerBackTitle: 'Back',
       headerLeft: () => (
         <Pressable
           onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
-          style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 8 }}>
-          <FontAwesome name="angle-left" size={28} color={Colors.violet.primary} style={{ marginRight: 6 }} />
-          <Text style={{ color: Colors.violet.primary, fontSize: 17 }}>Back</Text>
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 4 }}>
+          <FontAwesome name="chevron-left" size={16} color={Colors.violet.primary} style={{ marginRight: 5 }} />
+          <RNText style={{ color: Colors.violet.primary, fontSize: 17 }}>Back</RNText>
         </Pressable>
       ),
       headerRight: disc ? () => (
         <Pressable
           onPress={() => router.push(`/edit-disc/${disc.id}`)}
           hitSlop={8}
-          style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+          style={{ marginRight: 4, padding: 8 }}>
           <FontAwesome name="edit" size={18} color={Colors.violet.primary} />
         </Pressable>
       ) : undefined,
@@ -675,14 +677,14 @@ export default function DiscDetailScreen() {
             </RNView>
           ) : (
             <Pressable
-              style={styles.linkQrButton}
+              style={[styles.linkQrButton, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5', borderColor: isDark ? '#333' : '#eee' }]}
               onPress={startScanning}>
-              <FontAwesome name="qrcode" size={20} color={Colors.violet.primary} />
+              <FontAwesome name="qrcode" size={20} color={isDark ? '#a78bfa' : Colors.violet.primary} />
               <RNView style={styles.linkQrTextContainer}>
-                <Text style={styles.linkQrButtonText}>Link QR Code</Text>
-                <Text style={styles.linkQrHint}>Scan a QR sticker to attach to this disc</Text>
+                <Text style={[styles.linkQrButtonText, { color: isDark ? '#a78bfa' : Colors.violet.primary }]}>Link QR Code</Text>
+                <Text style={[styles.linkQrHint, { color: isDark ? '#666' : '#999' }]}>Scan a QR sticker to attach to this disc</Text>
               </RNView>
-              <FontAwesome name="camera" size={16} color={Colors.violet.primary} />
+              <FontAwesome name="camera" size={16} color={isDark ? '#a78bfa' : Colors.violet.primary} />
             </Pressable>
           )}
         </View>
@@ -924,11 +926,9 @@ const styles = StyleSheet.create({
   linkQrButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#eee',
     gap: 12,
   },
   linkQrTextContainer: {
@@ -937,11 +937,9 @@ const styles = StyleSheet.create({
   linkQrButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.violet.primary,
   },
   linkQrHint: {
     fontSize: 12,
-    color: '#999',
     marginTop: 2,
   },
   notes: {

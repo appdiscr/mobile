@@ -52,7 +52,7 @@ export default function HomeScreen() {
       <Pressable style={[styles.stickerCard, dynamicStyles.stickerCard]} onPress={() => router.push('/order-stickers')}>
         <RNView style={styles.stickerCardContent}>
           <RNView style={[styles.stickerIconContainer, dynamicStyles.stickerIconContainer]}>
-            <FontAwesome name="qrcode" size={32} color={Colors.violet.primary} />
+            <FontAwesome name="qrcode" size={32} color={isDark ? '#a78bfa' : Colors.violet.primary} />
           </RNView>
           <RNView style={styles.stickerTextContainer}>
             <Text style={styles.stickerCardTitle}>Protect Your Discs</Text>
@@ -60,36 +60,36 @@ export default function HomeScreen() {
               Get QR code stickers so finders can contact you instantly
             </Text>
           </RNView>
-          <FontAwesome name="chevron-right" size={16} color={Colors.violet.primary} />
+          <FontAwesome name="chevron-right" size={16} color={isDark ? '#a78bfa' : Colors.violet.primary} />
         </RNView>
       </Pressable>
 
       {/* Quick Actions */}
       <RNView style={styles.quickActions}>
         <Pressable style={[styles.quickAction, dynamicStyles.quickAction]} onPress={() => router.push('/add-disc')}>
-          <RNView style={[styles.quickActionIcon, { backgroundColor: Colors.violet[100] }]}>
-            <FontAwesome name="plus" size={20} color={Colors.violet.primary} />
+          <RNView style={[styles.quickActionIcon, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.2)' : Colors.violet[100] }]}>
+            <FontAwesome name="plus" size={20} color={isDark ? '#a78bfa' : Colors.violet.primary} />
           </RNView>
           <Text style={styles.quickActionText}>Add Disc</Text>
         </Pressable>
 
         <Pressable style={[styles.quickAction, dynamicStyles.quickAction]} onPress={() => router.push('/my-orders')}>
-          <RNView style={[styles.quickActionIcon, { backgroundColor: '#E8F5E9' }]}>
-            <FontAwesome name="shopping-bag" size={20} color="#27AE60" />
+          <RNView style={[styles.quickActionIcon, { backgroundColor: isDark ? 'rgba(39, 174, 96, 0.2)' : '#E8F5E9' }]}>
+            <FontAwesome name="shopping-bag" size={20} color={isDark ? '#4ade80' : '#27AE60'} />
           </RNView>
           <Text style={styles.quickActionText}>My Orders</Text>
         </Pressable>
 
         <Pressable style={[styles.quickAction, dynamicStyles.quickAction]} onPress={() => router.push('/(tabs)/found-disc')}>
-          <RNView style={[styles.quickActionIcon, { backgroundColor: '#FFF3E0' }]}>
-            <FontAwesome name="search" size={20} color="#F39C12" />
+          <RNView style={[styles.quickActionIcon, { backgroundColor: isDark ? 'rgba(243, 156, 18, 0.2)' : '#FFF3E0' }]}>
+            <FontAwesome name="search" size={20} color={isDark ? '#fbbf24' : '#F39C12'} />
           </RNView>
           <Text style={styles.quickActionText}>Found Disc</Text>
         </Pressable>
 
         <Pressable style={[styles.quickAction, dynamicStyles.quickAction]} onPress={() => router.push('/link-sticker')}>
-          <RNView style={[styles.quickActionIcon, { backgroundColor: '#E8F5E9' }]}>
-            <FontAwesome name="link" size={20} color="#27AE60" />
+          <RNView style={[styles.quickActionIcon, { backgroundColor: isDark ? 'rgba(39, 174, 96, 0.2)' : '#E8F5E9' }]}>
+            <FontAwesome name="link" size={20} color={isDark ? '#4ade80' : '#27AE60'} />
           </RNView>
           <Text style={styles.quickActionText}>Link Sticker</Text>
         </Pressable>

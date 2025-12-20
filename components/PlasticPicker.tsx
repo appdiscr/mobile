@@ -131,7 +131,7 @@ export function PlasticPicker({
                   onPress={() => handleSelect(plastic)}>
                   <Text style={[styles.optionText, { color: textColor }]}>{plastic}</Text>
                   {value === plastic && (
-                    <FontAwesome name="check" size={16} color="#3B1877" />
+                    <FontAwesome name="check" size={16} color={isDark ? '#fff' : '#3B1877'} />
                   )}
                 </Pressable>
               ))}

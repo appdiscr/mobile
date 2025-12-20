@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
 import { Alert, AppState, AppStateStatus, Pressable } from 'react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { checkClipboardForCode } from '@/lib/deferredLinking';
 import { initSentry } from '@/lib/sentry';
@@ -178,7 +179,14 @@ function RootLayoutNav() {
             ),
           })}
         />
-        <Stack.Screen name="disc/[id]" options={{ title: 'Disc Details', headerBackTitle: 'Back' }} />
+        <Stack.Screen
+          name="disc/[id]"
+          options={{
+            title: 'Disc Details',
+            headerBackTitle: 'Back',
+            headerTintColor: Colors.violet.primary,
+          }}
+        />
         <Stack.Screen
           name="edit-disc/[id]"
           options={({ navigation }) => ({

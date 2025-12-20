@@ -96,7 +96,7 @@ export function CategoryPicker({
                   onPress={() => handleSelect(category)}>
                   <Text style={[styles.optionText, { color: textColor }]}>{category}</Text>
                   {value === category && (
-                    <FontAwesome name="check" size={16} color="#3B1877" />
+                    <FontAwesome name="check" size={16} color={isDark ? '#fff' : '#3B1877'} />
                   )}
                 </Pressable>
               ))}
