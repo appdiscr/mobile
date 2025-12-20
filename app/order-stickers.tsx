@@ -467,7 +467,8 @@ export default function OrderStickersScreen() {
 
   // Handle user accepting the suggested address
   const handleAcceptSuggestion = async () => {
-    if (suggestedAddress) {
+    if (suggestedAddress && !loading) {
+      setLoading(true);
       setAddress(suggestedAddress);
       setShowAddressModal(false);
       await proceedWithCheckout(suggestedAddress);
@@ -476,6 +477,8 @@ export default function OrderStickersScreen() {
 
   // Handle user keeping their original address
   const handleKeepOriginal = async () => {
+    if (loading) return;
+    setLoading(true);
     setShowAddressModal(false);
     await proceedWithCheckout(address);
   };
@@ -806,10 +809,18 @@ export default function OrderStickersScreen() {
                   </Text>
                 </RNView>
 
-                <Pressable style={styles.modalButtonPrimary} onPress={handleAcceptSuggestion}>
+                <Pressable
+                  style={[styles.modalButtonPrimary, loading && styles.checkoutButtonDisabled]}
+                  onPress={handleAcceptSuggestion}
+                  disabled={loading}
+                >
                   <Text style={styles.modalButtonPrimaryText}>Use Suggested Address</Text>
                 </Pressable>
-                <Pressable style={styles.modalButtonSecondary} onPress={handleKeepOriginal}>
+                <Pressable
+                  style={styles.modalButtonSecondary}
+                  onPress={handleKeepOriginal}
+                  disabled={loading}
+                >
                   <Text style={[styles.modalButtonSecondaryText, dynamicStyles.modalText]}>
                     Keep My Address
                   </Text>

@@ -217,7 +217,7 @@ export default function MyBagScreen() {
         {/* Disc Info */}
         <View style={styles.discInfo}>
           <View style={styles.discNameRow}>
-            <Text style={styles.discName}>{item.mold || item.name}</Text>
+            <Text style={styles.discName} numberOfLines={1} ellipsizeMode="tail">{item.mold || item.name}</Text>
             {item.was_surrendered && (
               <View style={[styles.recoveryBadge, styles.surrenderedBadge]}>
                 <FontAwesome name="gift" size={10} color="#fff" />
@@ -232,7 +232,7 @@ export default function MyBagScreen() {
               </View>
             )}
           </View>
-          {item.manufacturer && <Text style={styles.discDetails}>{item.manufacturer}</Text>}
+          {item.manufacturer && <Text style={styles.discDetails} numberOfLines={1} ellipsizeMode="tail">{item.manufacturer}</Text>}
           {item.plastic && <Text style={styles.discMeta}>{item.plastic}</Text>}
           <View style={styles.discFooter}>
             {item.color && (
@@ -256,7 +256,7 @@ export default function MyBagScreen() {
                     ]}
                   />
                 )}
-                <Text style={styles.colorText}>{item.color}</Text>
+                <Text style={styles.colorText} numberOfLines={1}>{item.color}</Text>
               </View>
             )}
             {item.photos.length > 0 && (

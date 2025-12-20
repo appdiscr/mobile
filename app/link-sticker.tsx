@@ -290,6 +290,10 @@ export default function LinkStickerScreen() {
                   </>
                 )}
               </Pressable>
+
+              <Pressable style={styles.cancelButton} onPress={() => router.back()}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
             </RNView>
           ) : (
             // Step 2: Select Disc
@@ -533,5 +537,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
   },
 });
