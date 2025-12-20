@@ -1006,9 +1006,9 @@ export default function RecoveryDetailScreen() {
             <FontAwesome name="circle" size={60} color="#ccc" />
           </View>
         )}
-        <Text style={styles.discName}>{recovery.disc?.mold || recovery.disc?.name || 'Unknown Disc'}</Text>
+        <Text style={styles.discName} numberOfLines={2} ellipsizeMode="tail">{recovery.disc?.mold || recovery.disc?.name || 'Unknown Disc'}</Text>
         {recovery.disc?.manufacturer && (
-          <Text style={styles.discManufacturer}>{recovery.disc.manufacturer}</Text>
+          <Text style={styles.discManufacturer} numberOfLines={1} ellipsizeMode="tail">{recovery.disc.manufacturer}</Text>
         )}
         {recovery.disc?.plastic && <Text style={styles.discPlastic}>{recovery.disc.plastic}</Text>}
         {recovery.disc?.color && (
@@ -1035,7 +1035,7 @@ export default function RecoveryDetailScreen() {
           />
           <RNView style={styles.personInfo}>
             <Text style={styles.personLabel}>Owner</Text>
-            <Text style={[styles.personName, isOwner && styles.youText]}>
+            <Text style={[styles.personName, isOwner && styles.youText]} numberOfLines={1} ellipsizeMode="tail">
               {isOwner ? 'You' : recovery.owner.display_name}
             </Text>
           </RNView>
@@ -1048,7 +1048,7 @@ export default function RecoveryDetailScreen() {
           />
           <RNView style={styles.personInfo}>
             <Text style={styles.personLabel}>Finder</Text>
-            <Text style={[styles.personName, !isOwner && styles.youText]}>
+            <Text style={[styles.personName, !isOwner && styles.youText]} numberOfLines={1} ellipsizeMode="tail">
               {!isOwner ? 'You' : recovery.finder.display_name}
             </Text>
           </RNView>

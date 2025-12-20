@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -62,12 +62,48 @@ export default function TabLayout() {
     }
   }, [session?.access_token]);
 
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
   useEffect(() => {
     fetchUnreadCount();
 
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+    // Start polling for new notifications every 30 seconds
+    const startPolling = () => {
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(fetchUnreadCount, 30000);
+      }
+    };
+
+    const stopPolling = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    // Handle app state changes - pause polling when backgrounded
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App came to foreground - refresh and restart polling
+        fetchUnreadCount();
+        startPolling();
+      } else if (nextAppState.match(/inactive|background/)) {
+        // App went to background - stop polling to save battery
+        stopPolling();
+      }
+      appStateRef.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    // Start polling initially
+    startPolling();
+
+    return () => {
+      stopPolling();
+      subscription.remove();
+    };
   }, [fetchUnreadCount]);
 
   return (

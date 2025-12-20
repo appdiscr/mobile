@@ -126,19 +126,25 @@ export default function AddDiscScreen() {
 
   // QR Code scanning functions
   const startQrScanning = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
-        Alert.alert(
-          'Camera Permission Required',
-          'Please grant camera permission to scan QR codes.',
-          [{ text: 'OK' }]
-        );
-        return;
+    if (qrLoading) return;
+    setQrLoading(true);
+    try {
+      if (!permission?.granted) {
+        const result = await requestPermission();
+        if (!result.granted) {
+          Alert.alert(
+            'Camera Permission Required',
+            'Please grant camera permission to scan QR codes.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
       }
+      setHasScanned(false);
+      setShowQrScanner(true);
+    } finally {
+      setQrLoading(false);
     }
-    setHasScanned(false);
-    setShowQrScanner(true);
   };
 
   const handleBarcodeScan = async (result: BarcodeScanningResult) => {

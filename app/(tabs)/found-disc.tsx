@@ -11,6 +11,7 @@ import {
   Alert,
   Dimensions,
   View as RNView,
+  RefreshControl,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -100,6 +101,14 @@ export default function FoundDiscScreen() {
   const [loadingPending, setLoadingPending] = useState(true);
   const [loadingMyDiscs, setLoadingMyDiscs] = useState(true);
   const [unclaimedQrCode, setUnclaimedQrCode] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchPendingRecoveries(), fetchMyDiscsBeingRecovered()]);
+    setRefreshing(false);
+  }, []);
 
   // Fetch pending recoveries when screen comes into focus
   useFocusEffect(
@@ -494,7 +503,17 @@ export default function FoundDiscScreen() {
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.violet.primary}
+              colors={[Colors.violet.primary]}
+            />
+          }
+        >
           {/* My Discs Being Recovered Section - Show first if owner has active recoveries */}
           {loadingMyDiscs && (
             <RNView style={[styles.ownerRecoverySection, { borderColor: isDark ? '#444' : '#F39C12' }]}>
@@ -524,11 +543,11 @@ export default function FoundDiscScreen() {
                   style={[styles.ownerRecoveryCard, { borderColor: isDark ? '#444' : 'rgba(243, 156, 18, 0.4)' }]}
                   onPress={() => router.push(`/recovery/${recovery.id}`)}>
                   <RNView style={styles.ownerRecoveryInfo}>
-                    <Text style={styles.ownerRecoveryDiscName}>
+                    <Text style={styles.ownerRecoveryDiscName} numberOfLines={1} ellipsizeMode="tail">
                       {recovery.disc?.mold || recovery.disc?.name || 'Unknown Disc'}
                     </Text>
                     {recovery.disc?.manufacturer && (
-                      <Text style={styles.ownerRecoveryManufacturer}>{recovery.disc.manufacturer}</Text>
+                      <Text style={styles.ownerRecoveryManufacturer} numberOfLines={1} ellipsizeMode="tail">{recovery.disc.manufacturer}</Text>
                     )}
                     <RNView style={[styles.statusBadge, getStatusStyle(recovery.status)]}>
                       <Text style={styles.statusText}>{formatStatus(recovery.status, true)}</Text>
@@ -608,11 +627,11 @@ export default function FoundDiscScreen() {
                     </View>
                   )}
                   <View style={styles.pendingInfo}>
-                    <Text style={styles.pendingDiscName}>
+                    <Text style={styles.pendingDiscName} numberOfLines={1} ellipsizeMode="tail">
                       {recovery.disc?.mold || recovery.disc?.name || 'Unknown Disc'}
                     </Text>
                     {recovery.disc?.manufacturer && (
-                      <Text style={styles.pendingManufacturer}>{recovery.disc.manufacturer}</Text>
+                      <Text style={styles.pendingManufacturer} numberOfLines={1} ellipsizeMode="tail">{recovery.disc.manufacturer}</Text>
                     )}
                     {recovery.disc?.color && (
                       <Text style={styles.pendingColor}>{recovery.disc.color}</Text>
@@ -622,7 +641,7 @@ export default function FoundDiscScreen() {
                         <Text style={styles.statusText}>{formatStatus(recovery.status)}</Text>
                       </View>
                       {recovery.status !== 'abandoned' && recovery.disc?.owner_display_name && (
-                        <Text style={styles.pendingOwner}>→ {recovery.disc.owner_display_name}</Text>
+                        <Text style={styles.pendingOwner} numberOfLines={1} ellipsizeMode="tail">→ {recovery.disc.owner_display_name}</Text>
                       )}
                     </View>
                   </View>
@@ -803,9 +822,9 @@ export default function FoundDiscScreen() {
                 <FontAwesome name="circle" size={60} color="#ccc" />
               </View>
             )}
-            <Text style={styles.discName}>{discInfo.mold || discInfo.name}</Text>
+            <Text style={styles.discName} numberOfLines={2} ellipsizeMode="tail">{discInfo.mold || discInfo.name}</Text>
             {discInfo.manufacturer && (
-              <Text style={styles.discManufacturer}>{discInfo.manufacturer}</Text>
+              <Text style={styles.discManufacturer} numberOfLines={1} ellipsizeMode="tail">{discInfo.manufacturer}</Text>
             )}
             {discInfo.plastic && <Text style={styles.discPlastic}>{discInfo.plastic}</Text>}
             {discInfo.color && (
@@ -833,7 +852,7 @@ export default function FoundDiscScreen() {
             )}
             <View style={styles.ownerInfo}>
               <FontAwesome name="user" size={14} color="#666" />
-              <Text style={styles.ownerName}>{discInfo.owner_display_name}</Text>
+              <Text style={styles.ownerName} numberOfLines={1} ellipsizeMode="tail">{discInfo.owner_display_name}</Text>
             </View>
             {discInfo.reward_amount && discInfo.reward_amount > 0 && (
               <View style={styles.rewardBadge}>

@@ -535,7 +535,7 @@ export default function DiscDetailScreen() {
 
       {/* Disc Info */}
       <View style={styles.infoSection}>
-        <Text style={styles.title}>{disc.mold || disc.name}</Text>
+        <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">{disc.mold || disc.name}</Text>
 
         {/* Recovery Status Banner */}
         {disc.active_recovery && RECOVERY_STATUS_MAP[disc.active_recovery.status] && (
@@ -552,7 +552,7 @@ export default function DiscDetailScreen() {
         )}
 
         {/* Manufacturer */}
-        {disc.manufacturer && <Text style={styles.manufacturer}>{disc.manufacturer}</Text>}
+        {disc.manufacturer && <Text style={styles.manufacturer} numberOfLines={1} ellipsizeMode="tail">{disc.manufacturer}</Text>}
 
         {/* Details Grid */}
         <View style={styles.detailsGrid}>
