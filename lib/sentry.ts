@@ -17,7 +17,7 @@ export function initSentry(): void {
     dsn,
     enableAutoSessionTracking: true,
     tracesSampleRate: 0.2, // 20% of transactions for performance monitoring
-    debug: __DEV__,
+    debug: false, // Disable debug logs (they show noisy popups in dev)
   });
 }
 

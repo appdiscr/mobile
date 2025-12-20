@@ -21,6 +21,7 @@ import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import CameraWithOverlay from '@/components/CameraWithOverlay';
 import { compressImage } from '@/utils/imageCompression';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 interface LocationCoords {
   latitude: number;
@@ -100,8 +101,7 @@ export default function DropOffScreen() {
         longitude: currentLocation.coords.longitude,
       });
     } catch (error) {
-      console.error('Error getting location:', error);
-      Alert.alert('Location Error', 'Unable to get your current location. Please try again.');
+      handleError(error, { operation: 'get-location' });
     } finally {
       setLoadingLocation(false);
     }
@@ -235,19 +235,10 @@ export default function DropOffScreen() {
         throw new Error(data.error || 'Failed to create drop-off');
       }
 
-      Alert.alert(
-        'Drop-off Created!',
-        `You've left ${discName} for the owner to pick up. They've been notified with the location details.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/(tabs)/found-disc'),
-          },
-        ]
-      );
+      showSuccess(`You've left ${discName} for the owner to pick up`);
+      router.replace('/(tabs)/found-disc');
     } catch (error) {
-      console.error('Error creating drop-off:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create drop-off');
+      handleError(error, { operation: 'create-drop-off' });
     } finally {
       setSubmitting(false);
     }

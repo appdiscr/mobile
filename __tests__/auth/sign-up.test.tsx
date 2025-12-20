@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import SignUp from '../../app/(auth)/sign-up';
+import { handleError } from '../../lib/errorHandler';
 
 // Mock expo-router
 jest.mock('expo-router', () => ({
@@ -156,7 +157,7 @@ describe('SignUp', () => {
     });
   });
 
-  it('shows error alert on sign up failure', async () => {
+  it('shows error on sign up failure', async () => {
     mockSignUp.mockResolvedValue({ error: { message: 'Email already exists' } });
 
     const { getAllByText, getByPlaceholderText } = render(<SignUp />);
@@ -169,11 +170,14 @@ describe('SignUp', () => {
     });
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Sign Up Error', 'Email already exists');
+      expect(handleError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Email already exists' }),
+        expect.objectContaining({ operation: 'sign-up' })
+      );
     });
   });
 
-  it('shows error alert on unexpected error', async () => {
+  it('shows error on unexpected error', async () => {
     mockSignUp.mockRejectedValue(new Error('Network error'));
 
     const { getAllByText, getByPlaceholderText } = render(<SignUp />);
@@ -186,7 +190,10 @@ describe('SignUp', () => {
     });
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'An unexpected error occurred');
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ operation: 'sign-up' })
+      );
     });
   });
 

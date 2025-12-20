@@ -17,6 +17,7 @@ import * as AuthSession from 'expo-auth-session';
 import { useAuth } from '@/contexts/AuthContext';
 import { validateSignUpForm } from '@/lib/validation';
 import { supabase } from '@/lib/supabase';
+import { handleError } from '@/lib/errorHandler';
 import Colors from '@/constants/Colors';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -49,8 +50,9 @@ export default function SignUp() {
       const { error } = await signUp(email.trim(), password);
 
       if (error) {
-        Alert.alert('Sign Up Error', error.message);
+        handleError(error, { operation: 'sign-up' });
       } else {
+        // Keep as Alert since it navigates on dismiss
         Alert.alert(
           'Success',
           'Account created! You can now sign in.',
@@ -63,7 +65,7 @@ export default function SignUp() {
         );
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      handleError(error, { operation: 'sign-up' });
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ export default function SignUp() {
       });
 
       if (error) {
-        Alert.alert('Google Sign Up Error', error.message);
+        handleError(error, { operation: 'google-sign-up' });
         return;
       }
 
@@ -97,7 +99,7 @@ export default function SignUp() {
         // The deep link handler in AuthContext will process the callback
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      handleError(error, { operation: 'google-sign-up' });
     } finally {
       setLoading(false);
     }

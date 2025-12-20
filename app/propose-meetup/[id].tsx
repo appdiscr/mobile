@@ -18,6 +18,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 export default function ProposeMeetupScreen() {
   const { id: recoveryEventId } = useLocalSearchParams<{ id: string }>();
@@ -203,15 +204,10 @@ export default function ProposeMeetupScreen() {
         ? 'Your meetup proposal has been sent to the finder.'
         : 'Your meetup proposal has been sent to the disc owner.';
 
-      Alert.alert('Success!', successMessage, [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/(tabs)/found-disc'),
-        },
-      ]);
+      showSuccess(successMessage);
+      router.replace('/(tabs)/found-disc');
     } catch (error) {
-      console.error('Error proposing meetup:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to propose meetup');
+      handleError(error, { operation: 'propose-meetup' });
     } finally {
       setSubmitting(false);
     }

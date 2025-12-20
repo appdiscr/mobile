@@ -21,6 +21,7 @@ import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { useColorScheme } from '@/components/useColorScheme';
 import { RecoveryCardSkeleton } from '@/components/Skeleton';
+import { handleError } from '@/lib/errorHandler';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

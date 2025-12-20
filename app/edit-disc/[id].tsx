@@ -27,6 +27,7 @@ import { CatalogDisc } from '@/hooks/useDiscCatalogSearch';
 import { compressImage } from '@/utils/imageCompression';
 import { FormFieldSkeleton, Skeleton } from '@/components/Skeleton';
 import { formatFeeHint } from '@/lib/stripeFees';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 interface FlightNumbers {
   speed: number | null;
@@ -229,8 +230,7 @@ export default function EditDiscScreen() {
 
       console.log('Disc data loaded successfully');
     } catch (error) {
-      console.error('Error fetching disc:', error);
-      Alert.alert('Error', 'Failed to load disc data. Please try again.');
+      handleError(error, { operation: 'fetch-disc-data' });
     } finally {
       setLoading(false);
     }
@@ -482,15 +482,10 @@ export default function EditDiscScreen() {
       // Clear new photos array after successful save
       setNewPhotos([]);
 
-      Alert.alert('Success', 'Disc updated successfully!', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
+      showSuccess('Disc updated successfully');
+      router.back();
     } catch (error) {
-      console.error('Error updating disc:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update disc');
+      handleError(error, { operation: 'update-disc' });
     } finally {
       setSaving(false);
     }

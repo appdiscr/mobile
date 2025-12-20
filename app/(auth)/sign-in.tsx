@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +15,7 @@ import * as AuthSession from 'expo-auth-session';
 import { useAuth } from '@/contexts/AuthContext';
 import { validateSignInForm } from '@/lib/validation';
 import { supabase } from '@/lib/supabase';
+import { handleError } from '@/lib/errorHandler';
 import Colors from '@/constants/Colors';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -45,12 +45,12 @@ export default function SignIn() {
       const { error } = await signIn(email.trim(), password);
 
       if (error) {
-        Alert.alert('Sign In Error', error.message);
+        handleError(error, { operation: 'sign-in' });
       } else {
         router.replace('/(tabs)');
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      handleError(error, { operation: 'sign-in' });
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function SignIn() {
       });
 
       if (error) {
-        Alert.alert('Google Sign In Error', error.message);
+        handleError(error, { operation: 'google-sign-in' });
         return;
       }
 
@@ -84,7 +84,7 @@ export default function SignIn() {
         // The deep link handler in AuthContext will process the callback
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      handleError(error, { operation: 'google-sign-in' });
     } finally {
       setLoading(false);
     }

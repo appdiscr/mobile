@@ -29,6 +29,7 @@ import { CategoryPicker } from '@/components/CategoryPicker';
 import { CatalogDisc } from '@/hooks/useDiscCatalogSearch';
 import { compressImage } from '@/utils/imageCompression';
 import { formatFeeHint } from '@/lib/stripeFees';
+import { handleError } from '@/lib/errorHandler';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -255,7 +256,7 @@ export default function AddDiscScreen() {
       }
     } catch (error) {
       console.error('QR scan error:', error);
-      Alert.alert('Error', 'Failed to process QR code. Please try again.');
+      handleError(error, { operation: 'process-qr-code' });
     } finally {
       setQrLoading(false);
     }
@@ -460,7 +461,7 @@ export default function AddDiscScreen() {
       ]);
     } catch (error) {
       console.error('Error creating disc:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to add disc');
+      handleError(error, { operation: 'create-disc' });
     } finally {
       setLoading(false);
     }

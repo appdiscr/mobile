@@ -16,6 +16,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { useColorScheme } from '@/components/useColorScheme';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 interface Disc {
   id: string;
@@ -138,8 +139,7 @@ export default function LinkStickerScreen() {
       setVerified(true);
       setShortCode(code.trim().toUpperCase());
     } catch (error) {
-      console.error('Error verifying code:', error);
-      Alert.alert('Error', 'Failed to verify sticker code');
+      handleError(error, { operation: 'verify-sticker-code' });
     } finally {
       setVerifying(false);
     }
@@ -203,8 +203,7 @@ export default function LinkStickerScreen() {
         ]
       );
     } catch (error) {
-      console.error('Error linking sticker:', error);
-      Alert.alert('Error', 'Failed to link sticker to disc');
+      handleError(error, { operation: 'link-sticker' });
     } finally {
       setLoading(false);
     }

@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { openVenmoPayment } from '@/lib/venmoDeepLink';
 import * as WebBrowser from 'expo-web-browser';
 import { formatFeeHint, calculateTotalWithFee } from '@/lib/stripeFees';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 interface MeetupProposal {
   id: string;
@@ -236,10 +237,10 @@ export default function RecoveryDetailScreen() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to accept meetup');
 
-      Alert.alert('Success', 'Meetup accepted! The finder has been notified.');
+      showSuccess('Meetup accepted! The finder has been notified.');
       fetchRecoveryDetails();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to accept meetup');
+      handleError(err, { operation: 'accept-meetup' });
     } finally {
       setActionLoading(false);
     }
@@ -280,11 +281,10 @@ export default function RecoveryDetailScreen() {
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to complete recovery');
 
-              Alert.alert('Success', 'Your disc has been marked as recovered!', [
-                { text: 'OK', onPress: () => router.back() },
-              ]);
+              showSuccess('Your disc has been marked as recovered!');
+              router.back();
             } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to complete recovery');
+              handleError(err, { operation: 'complete-recovery' });
             } finally {
               setActionLoading(false);
             }
@@ -327,13 +327,10 @@ export default function RecoveryDetailScreen() {
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to surrender disc');
 
-              Alert.alert(
-                'Disc Surrendered',
-                `${discName} has been transferred to ${finderName}. It will now appear in their collection.`,
-                [{ text: 'OK', onPress: () => router.replace('/') }]
-              );
+              showSuccess(`${discName} has been transferred to ${finderName}`);
+              router.replace('/');
             } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to surrender disc');
+              handleError(err, { operation: 'surrender-disc' });
             } finally {
               setActionLoading(false);
             }
@@ -372,11 +369,10 @@ export default function RecoveryDetailScreen() {
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to mark as retrieved');
 
-              Alert.alert('Success', 'Your disc has been marked as retrieved!', [
-                { text: 'OK', onPress: () => router.back() },
-              ]);
+              showSuccess('Your disc has been marked as retrieved!');
+              router.back();
             } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to mark as retrieved');
+              handleError(err, { operation: 'mark-retrieved' });
             } finally {
               setActionLoading(false);
             }
@@ -419,13 +415,10 @@ export default function RecoveryDetailScreen() {
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to relinquish disc');
 
-              Alert.alert(
-                'Disc Given to Finder',
-                `${discName} has been transferred to ${finderName}. It will now appear in their collection.`,
-                [{ text: 'OK', onPress: () => router.replace('/') }]
-              );
+              showSuccess(`${discName} has been transferred to ${finderName}`);
+              router.replace('/');
             } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to relinquish disc');
+              handleError(err, { operation: 'relinquish-disc' });
             } finally {
               setActionLoading(false);
             }
@@ -467,13 +460,10 @@ export default function RecoveryDetailScreen() {
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to abandon disc');
 
-              Alert.alert(
-                'Disc Abandoned',
-                `${discName} is now available for anyone to claim. It will be removed from your collection.`,
-                [{ text: 'OK', onPress: () => router.replace('/') }]
-              );
+              showSuccess(`${discName} is now available for anyone to claim`);
+              router.replace('/');
             } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to abandon disc');
+              handleError(err, { operation: 'abandon-disc' });
             } finally {
               setActionLoading(false);
             }
@@ -535,10 +525,10 @@ export default function RecoveryDetailScreen() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to mark reward as received');
 
-      Alert.alert('Thank you!', 'The reward has been marked as received.');
+      showSuccess('The reward has been marked as received');
       fetchRecoveryDetails();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to mark reward as received');
+      handleError(err, { operation: 'mark-reward-received' });
     } finally {
       setMarkingPaid(false);
     }
@@ -576,7 +566,7 @@ export default function RecoveryDetailScreen() {
       // Refresh to check if payment was completed
       fetchRecoveryDetails();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to process payment');
+      handleError(err, { operation: 'pay-with-card' });
     } finally {
       setCardPaymentLoading(false);
     }

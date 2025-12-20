@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import SignIn from '../../app/(auth)/sign-in';
+import { handleError } from '../../lib/errorHandler';
 
 // Mock expo-router
 jest.mock('expo-router', () => ({
@@ -116,7 +117,7 @@ describe('SignIn', () => {
     });
   });
 
-  it('shows error alert on sign in failure', async () => {
+  it('shows error on sign in failure', async () => {
     mockSignIn.mockResolvedValue({ error: { message: 'Invalid credentials' } });
 
     const { getByText, getByPlaceholderText } = render(<SignIn />);
@@ -128,11 +129,14 @@ describe('SignIn', () => {
     });
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Sign In Error', 'Invalid credentials');
+      expect(handleError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Invalid credentials' }),
+        expect.objectContaining({ operation: 'sign-in' })
+      );
     });
   });
 
-  it('shows error alert on unexpected error', async () => {
+  it('shows error on unexpected error', async () => {
     mockSignIn.mockRejectedValue(new Error('Network error'));
 
     const { getByText, getByPlaceholderText } = render(<SignIn />);
@@ -144,7 +148,10 @@ describe('SignIn', () => {
     });
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'An unexpected error occurred');
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ operation: 'sign-in' })
+      );
     });
   });
 

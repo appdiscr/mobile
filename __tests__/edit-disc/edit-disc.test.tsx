@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import EditDiscScreen from '../../app/edit-disc/[id]';
+import { handleError } from '../../lib/errorHandler';
 
 // Mock expo-router
 const mockBack = jest.fn();
@@ -299,7 +300,10 @@ describe('EditDiscScreen', () => {
     render(<EditDiscScreen />);
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Failed to load disc data. Please try again.');
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ operation: 'fetch-disc-data' })
+      );
     });
   });
 

@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { useColorScheme } from '@/components/useColorScheme';
 import { DiscDetailSkeleton } from '@/components/Skeleton';
 import { formatFeeHint } from '@/lib/stripeFees';
+import { handleError } from '@/lib/errorHandler';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -180,8 +181,7 @@ export default function DiscDetailScreen() {
 
       setDisc(foundDisc);
     } catch (error) {
-      console.error('Error fetching disc:', error);
-      Alert.alert('Error', 'Failed to load disc details. Please try again.');
+      handleError(error, { operation: 'fetch-disc-detail' });
     } finally {
       setLoading(false);
     }
@@ -244,8 +244,7 @@ export default function DiscDetailScreen() {
         },
       ]);
     } catch (error) {
-      console.error('Error deleting disc:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to delete disc');
+      handleError(error, { operation: 'delete-disc' });
     } finally {
       setDeleting(false);
     }
@@ -337,8 +336,7 @@ export default function DiscDetailScreen() {
       // Refresh disc data
       fetchDiscDetail();
     } catch (error) {
-      console.error('Link error:', error);
-      Alert.alert('Error', 'Failed to link QR code. Please try again.');
+      handleError(error, { operation: 'link-qr-code' });
     } finally {
       setLinking(false);
     }
@@ -401,8 +399,7 @@ export default function DiscDetailScreen() {
       // Refresh disc data
       fetchDiscDetail();
     } catch (error) {
-      console.error('Unlink error:', error);
-      Alert.alert('Error', 'Failed to unlink QR code. Please try again.');
+      handleError(error, { operation: 'unlink-qr-code' });
     } finally {
       setUnlinking(false);
     }

@@ -14,6 +14,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/Colors';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 /**
  * Claim Disc Screen
@@ -77,22 +78,10 @@ export default function ClaimDiscScreen() {
         throw new Error(data.error || 'Failed to claim disc');
       }
 
-      Alert.alert(
-        'Disc Claimed!',
-        'This disc has been added to your collection.',
-        [
-          {
-            text: 'View Disc',
-            onPress: () => router.replace(`/disc/${params.discId}`),
-          },
-        ]
-      );
+      showSuccess('Disc claimed! Added to your collection.');
+      router.replace(`/disc/${params.discId}`);
     } catch (err) {
-      console.error('Error claiming disc:', err);
-      Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to claim disc'
-      );
+      handleError(err, { operation: 'claim-disc' });
     } finally {
       setClaiming(false);
     }

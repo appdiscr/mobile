@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import MyBagScreen from '../../app/(tabs)/my-bag';
+import { handleError } from '../../lib/errorHandler';
 
 // Mock expo-router
 const mockRouterPush = jest.fn();
@@ -256,15 +257,15 @@ describe('MyBagScreen', () => {
     });
   });
 
-  it('shows error alert when fetch fails and no cached data', async () => {
+  it('shows error when fetch fails and no cached data', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     render(<MyBagScreen />);
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Error',
-        'Failed to load your discs. Please try again.'
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ operation: 'fetch-discs' })
       );
     });
   });
@@ -290,9 +291,9 @@ describe('MyBagScreen', () => {
     render(<MyBagScreen />);
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Error',
-        'Failed to load your discs. Please try again.'
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ operation: 'fetch-discs' })
       );
     });
   });

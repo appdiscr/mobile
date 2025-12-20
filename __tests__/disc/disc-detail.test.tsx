@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import DiscDetailScreen from '../../app/disc/[id]';
+import { handleError } from '../../lib/errorHandler';
 
 // Mock expo-router
 const mockRouterPush = jest.fn();
@@ -310,15 +311,15 @@ describe('DiscDetailScreen', () => {
     expect(mockRouterBack).toHaveBeenCalled();
   });
 
-  it('shows error alert on fetch failure', async () => {
+  it('shows error on fetch failure', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     render(<DiscDetailScreen />);
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Error',
-        'Failed to load disc details. Please try again.'
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ operation: 'fetch-disc-detail' })
       );
     });
   });

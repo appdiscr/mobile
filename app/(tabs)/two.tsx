@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
 import { compressImage } from '@/utils/imageCompression';
 import { RecoveryCardSkeleton, FormFieldSkeleton, Skeleton } from '@/components/Skeleton';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 type DisplayPreference = 'username' | 'full_name';
 
@@ -202,14 +203,9 @@ export default function ProfileScreen() {
       if (error) throw error;
 
       setProfile(prev => ({ ...prev, ...updates }));
-      Alert.alert('Success', 'Profile updated successfully');
+      showSuccess('Profile updated');
     } catch (error: unknown) {
-      console.error('Error saving profile:', error);
-      if (error instanceof Error && error.message?.includes('unique')) {
-        Alert.alert('Error', 'This username is already taken. Please choose another.');
-      } else {
-        Alert.alert('Error', 'Failed to update profile');
-      }
+      handleError(error, { operation: 'save-profile' });
     } finally {
       setSaving(false);
     }
@@ -272,8 +268,7 @@ export default function ProfileScreen() {
         await uploadPhoto(result.assets[0]);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to select image');
+      handleError(error, { operation: 'pick-image' });
     }
   };
 
@@ -321,10 +316,9 @@ export default function ProfileScreen() {
       setAvatarSignedUrl(data.avatar_url);
       setImageError(false);
 
-      Alert.alert('Success', 'Profile photo updated!');
+      showSuccess('Profile photo updated');
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to upload photo');
+      handleError(error, { operation: 'upload-profile-photo' });
     } finally {
       setUploadingPhoto(false);
     }
@@ -375,10 +369,9 @@ export default function ProfileScreen() {
       setAvatarSignedUrl(null);
       setImageError(false);
 
-      Alert.alert('Success', 'Profile photo removed');
+      showSuccess('Profile photo removed');
     } catch (error) {
-      console.error('Error deleting photo:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to delete photo');
+      handleError(error, { operation: 'delete-profile-photo' });
     } finally {
       setUploadingPhoto(false);
     }
@@ -722,10 +715,9 @@ export default function ProfileScreen() {
         country: savedAddress.country,
       });
       setEditingShippingAddress(false);
-      Alert.alert('Success', 'Shipping address saved');
+      showSuccess('Shipping address saved');
     } catch (error) {
-      console.error('Error saving shipping address:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to save address');
+      handleError(error, { operation: 'save-shipping-address' });
     } finally {
       setSavingShippingAddress(false);
     }
@@ -777,8 +769,7 @@ export default function ProfileScreen() {
       // Refresh profile to get updated Connect status
       await fetchProfile();
     } catch (error) {
-      console.error('Error setting up payouts:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to start payout setup');
+      handleError(error, { operation: 'setup-payouts' });
     } finally {
       setConnectLoading(false);
     }

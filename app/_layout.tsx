@@ -1,10 +1,12 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Toasts } from '@backpackapp-io/react-native-toast';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
 import { Alert, AppState, AppStateStatus, Pressable } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
@@ -156,61 +158,64 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(auth)/sign-in" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/sign-up" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/forgot-password" options={{ title: 'Forgot Password', headerBackTitle: 'Back' }} />
-        <Stack.Screen name="(auth)/reset-password" options={{ title: 'Reset Password', headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="add-disc"
-          options={({ navigation }) => ({
-            presentation: 'modal',
-            title: 'Add Disc',
-            headerRight: () => (
-              <Pressable
-                onPress={() => navigation.goBack()}
-                hitSlop={8}
-                style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <FontAwesome name="times" size={18} color={colorScheme === 'dark' ? '#999' : '#666'} />
-              </Pressable>
-            ),
-          })}
-        />
-        <Stack.Screen
-          name="disc/[id]"
-          options={{
-            title: 'Disc Details',
-            headerBackTitle: 'Back',
-            headerTintColor: Colors.violet.primary,
-          }}
-        />
-        <Stack.Screen
-          name="edit-disc/[id]"
-          options={({ navigation }) => ({
-            presentation: 'modal',
-            title: 'Edit Disc',
-            headerRight: () => (
-              <Pressable
-                onPress={() => navigation.goBack()}
-                hitSlop={8}
-                style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <FontAwesome name="times" size={18} color={colorScheme === 'dark' ? '#999' : '#666'} />
-              </Pressable>
-            ),
-          })}
-        />
-        <Stack.Screen name="recovery/[id]" options={{ title: 'Recovery Details', headerBackTitle: 'Back' }} />
-        <Stack.Screen name="propose-meetup/[id]" options={{ presentation: 'modal', title: 'Propose Meetup' }} />
-        <Stack.Screen name="drop-off/[id]" options={{ title: 'Drop Off Location', headerBackTitle: 'Back' }} />
-        <Stack.Screen name="d/[code]" options={{ headerShown: false }} />
-        <Stack.Screen name="claim-disc" options={{ title: 'Claim Disc', headerShown: false }} />
-        <Stack.Screen name="link-sticker" options={{ title: 'Link Sticker', headerBackTitle: 'Back' }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(auth)/sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)/sign-up" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)/forgot-password" options={{ title: 'Forgot Password', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="(auth)/reset-password" options={{ title: 'Reset Password', headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="add-disc"
+            options={({ navigation }) => ({
+              presentation: 'modal',
+              title: 'Add Disc',
+              headerRight: () => (
+                <Pressable
+                  onPress={() => navigation.goBack()}
+                  hitSlop={8}
+                  style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <FontAwesome name="times" size={18} color={colorScheme === 'dark' ? '#999' : '#666'} />
+                </Pressable>
+              ),
+            })}
+          />
+          <Stack.Screen
+            name="disc/[id]"
+            options={{
+              title: 'Disc Details',
+              headerBackTitle: 'Back',
+              headerTintColor: Colors.violet.primary,
+            }}
+          />
+          <Stack.Screen
+            name="edit-disc/[id]"
+            options={({ navigation }) => ({
+              presentation: 'modal',
+              title: 'Edit Disc',
+              headerRight: () => (
+                <Pressable
+                  onPress={() => navigation.goBack()}
+                  hitSlop={8}
+                  style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <FontAwesome name="times" size={18} color={colorScheme === 'dark' ? '#999' : '#666'} />
+                </Pressable>
+              ),
+            })}
+          />
+          <Stack.Screen name="recovery/[id]" options={{ title: 'Recovery Details', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="propose-meetup/[id]" options={{ presentation: 'modal', title: 'Propose Meetup' }} />
+          <Stack.Screen name="drop-off/[id]" options={{ title: 'Drop Off Location', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="d/[code]" options={{ headerShown: false }} />
+          <Stack.Screen name="claim-disc" options={{ title: 'Claim Disc', headerShown: false }} />
+          <Stack.Screen name="link-sticker" options={{ title: 'Link Sticker', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        </Stack>
+        <Toasts />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

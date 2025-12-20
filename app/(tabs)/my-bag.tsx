@@ -6,7 +6,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
-  Alert,
   View as RNView,
   useColorScheme,
 } from 'react-native';
@@ -17,6 +16,7 @@ import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { getCachedDiscs, setCachedDiscs, isCacheStale } from '@/utils/discCache';
 import { DiscCardSkeleton } from '@/components/Skeleton';
+import { handleError } from '@/lib/errorHandler';
 
 interface FlightNumbers {
   speed: number | null;
@@ -158,10 +158,9 @@ export default function MyBagScreen() {
       // Save to cache
       await setCachedDiscs(data);
     } catch (error) {
-      console.error('Error fetching discs:', error);
       // Only show error if we don't have cached data to display
       if (discs.length === 0) {
-        Alert.alert('Error', 'Failed to load your discs. Please try again.');
+        handleError(error, { operation: 'fetch-discs' });
       }
     } finally {
       setLoading(false);

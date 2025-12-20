@@ -20,6 +20,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from '@/constants/Colors';
 import { supabase } from '@/lib/supabase';
 import { validateShippingAddress, ShippingAddress as ValidationAddress } from '@/lib/validation';
+import { handleError, showSuccess } from '@/lib/errorHandler';
 
 const UNIT_PRICE_CENTS = 100; // $1.00 per sticker
 const MIN_QUANTITY = 1;
@@ -406,11 +407,7 @@ export default function OrderStickersScreen() {
         }
       }
     } catch (error) {
-      console.error('Checkout error:', error);
-      Alert.alert(
-        'Checkout Failed',
-        error instanceof Error ? error.message : 'Please try again'
-      );
+      handleError(error, { operation: 'checkout' });
     } finally {
       setLoading(false);
     }

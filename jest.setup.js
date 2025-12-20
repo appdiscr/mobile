@@ -116,6 +116,32 @@ jest.mock('./lib/sentry', () => ({
   },
 }));
 
+// Mock toast library
+jest.mock('@backpackapp-io/react-native-toast', () => ({
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    loading: jest.fn(),
+    dismiss: jest.fn(),
+  }),
+  Toasts: () => null,
+}));
+
+// Mock our error handler
+jest.mock('./lib/errorHandler', () => ({
+  handleError: jest.fn(),
+  showSuccess: jest.fn(),
+  showInfo: jest.fn(),
+}));
+
+// Mock react-native-gesture-handler
+jest.mock('react-native-gesture-handler', () => ({
+  GestureHandlerRootView: ({ children }) => children,
+  Swipeable: 'Swipeable',
+  PanGestureHandler: 'PanGestureHandler',
+  gestureHandlerRootHOC: jest.fn((Component) => Component),
+}));
+
 // Mock Supabase
 jest.mock('./lib/supabase', () => ({
   supabase: {
