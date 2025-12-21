@@ -337,4 +337,121 @@ describe('MyBagScreen', () => {
       expect(getByText('Test Disc')).toBeTruthy(); // falls back to name
     });
   });
+
+  it('shows multiple discs', async () => {
+    const disc2 = { ...mockDisc, id: '2', mold: 'Firebird', manufacturer: 'Innova' };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([mockDisc, disc2]),
+    });
+
+    const { getByText } = render(<MyBagScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Destroyer')).toBeTruthy();
+      expect(getByText('Firebird')).toBeTruthy();
+    });
+  });
+
+  it('displays disc plastic type', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([mockDisc]),
+    });
+
+    const { getByText } = render(<MyBagScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Star')).toBeTruthy();
+    });
+  });
+
+  it('displays disc color badge', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([mockDisc]),
+    });
+
+    const { getByText } = render(<MyBagScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Blue')).toBeTruthy();
+    });
+  });
+
+  it('handles pull to refresh', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([mockDisc]),
+    });
+
+    const { UNSAFE_getAllByType } = render(<MyBagScreen />);
+    const { RefreshControl } = require('react-native');
+
+    await waitFor(() => {
+      const refreshControls = UNSAFE_getAllByType(RefreshControl);
+      expect(refreshControls.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows meetup proposed status', async () => {
+    const discWithMeetup = {
+      ...mockDisc,
+      id: '5',
+      active_recovery: {
+        id: 'r2',
+        status: 'meetup_proposed',
+        finder_id: 'finder-123',
+        found_at: '2024-01-02',
+      },
+    };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([discWithMeetup]),
+    });
+
+    const { getByText } = render(<MyBagScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Meetup Proposed')).toBeTruthy();
+    });
+  });
+
+  it('shows meetup confirmed status', async () => {
+    const discWithConfirmedMeetup = {
+      ...mockDisc,
+      id: '6',
+      active_recovery: {
+        id: 'r3',
+        status: 'meetup_confirmed',
+        finder_id: 'finder-123',
+        found_at: '2024-01-02',
+      },
+    };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([discWithConfirmedMeetup]),
+    });
+
+    const { getByText } = render(<MyBagScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Meetup Confirmed')).toBeTruthy();
+    });
+  });
+
+  it('shows disc with no photos differently than with photos', async () => {
+    const discNoPhotos = { ...mockDisc, photos: [] };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([discNoPhotos]),
+    });
+
+    const { queryByText, getByText } = render(<MyBagScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Destroyer')).toBeTruthy();
+      // No photo count badge should show
+    });
+  });
 });

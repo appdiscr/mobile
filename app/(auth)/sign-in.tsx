@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ export default function SignIn() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+  const isSubmitting = useRef(false);
 
   const validateForm = () => {
     const newErrors = validateSignInForm(email, password);
@@ -36,10 +37,15 @@ export default function SignIn() {
   };
 
   const handleSignIn = async () => {
+    if (isSubmitting.current) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
+    isSubmitting.current = true;
     setLoading(true);
     try {
       const { error } = await signIn(email.trim(), password);
@@ -53,6 +59,7 @@ export default function SignIn() {
       handleError(error, { operation: 'sign-in' });
     } finally {
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 

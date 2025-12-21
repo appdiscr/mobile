@@ -31,10 +31,11 @@ export const validateSignInForm = (
   password: string
 ): { email?: string; password?: string } => {
   const errors: { email?: string; password?: string } = {};
+  const trimmedEmail = email.trim();
 
-  if (!email.trim()) {
+  if (!trimmedEmail) {
     errors.email = 'Email is required';
-  } else if (!validateEmail(email)) {
+  } else if (!validateEmail(trimmedEmail)) {
     errors.email = 'Please enter a valid email';
   }
 
@@ -55,10 +56,11 @@ export const validateSignUpForm = (
     password?: string;
     confirmPassword?: string;
   } = {};
+  const trimmedEmail = email.trim();
 
-  if (!email.trim()) {
+  if (!trimmedEmail) {
     errors.email = 'Email is required';
-  } else if (!validateEmail(email)) {
+  } else if (!validateEmail(trimmedEmail)) {
     errors.email = 'Please enter a valid email';
   }
 
