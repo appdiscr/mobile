@@ -113,6 +113,7 @@ export default function AddDiscScreen() {
   const [showAiCropper, setShowAiCropper] = useState(false);
   const [aiImageUri, setAiImageUri] = useState('');
   const [showIdentificationResult, setShowIdentificationResult] = useState(false);
+  const [aiLogId, setAiLogId] = useState<string | null>(null);
 
   // Validation errors
   const [moldError, setMoldError] = useState('');
@@ -408,14 +409,46 @@ export default function AddDiscScreen() {
     setPhotos([uri]);
 
     // Run AI identification
-    const result = await identify(uri);
-    if (result) {
-      setShowIdentificationResult(true);
-    } else if (identifyError) {
-      Alert.alert('Identification Failed', identifyError, [
-        { text: 'Try Again', onPress: startAiPhotoFlow },
-        { text: 'Enter Manually', style: 'cancel' },
-      ]);
+    try {
+      const result = await identify(uri);
+      if (result) {
+        setShowIdentificationResult(true);
+      } else {
+        // identify() returned null, meaning there was an error
+        // Show alert - "Enter Manually" will just dismiss and show the form (which is already rendered)
+        Alert.alert(
+          'Identification Failed',
+          identifyError || 'Could not identify the disc. Please try again or enter details manually.',
+          [
+            { text: 'Try Again', onPress: startAiPhotoFlow },
+            {
+              text: 'Enter Manually',
+              onPress: () => {
+                // Form is already visible since entryMode is 'photo-ai'
+                // Just ensure no modals are blocking it
+                setShowOptionsModal(false);
+                setShowIdentificationResult(false);
+              },
+            },
+          ]
+        );
+      }
+    } catch (err) {
+      console.error('AI identification error:', err);
+      Alert.alert(
+        'Identification Failed',
+        'An unexpected error occurred. Please try again or enter details manually.',
+        [
+          { text: 'Try Again', onPress: startAiPhotoFlow },
+          {
+            text: 'Enter Manually',
+            onPress: () => {
+              setShowOptionsModal(false);
+              setShowIdentificationResult(false);
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -432,6 +465,14 @@ export default function AddDiscScreen() {
     }
     if (identification.plastic) {
       setPlastic(identification.plastic);
+    }
+    if (identification.color) {
+      setColor(identification.color);
+    }
+
+    // Save the AI log ID for tracking corrections
+    if (result.log_id) {
+      setAiLogId(result.log_id);
     }
 
     // If we have a catalog match, use its flight numbers (more reliable)
@@ -489,6 +530,7 @@ export default function AddDiscScreen() {
         reward_amount: rewardAmount ? parseFloat(rewardAmount) : undefined, // Send as dollars (decimal)
         notes: notes.trim() || undefined,
         qr_code_id: qrCodeId || undefined, // Link QR code if scanned
+        ai_identification_log_id: aiLogId || undefined, // Track AI identification for learning
       };
 
       console.log('Creating disc with:', JSON.stringify(requestBody, null, 2));
@@ -735,8 +777,23 @@ export default function AddDiscScreen() {
         </View>
       )}
 
+      {/* Only render the form after user selects an entry mode */}
+      {entryMode !== null && (
+      <View style={[styles.container, dynamicContainerStyle]}>
+        {/* Custom header */}
+        <View style={[styles.formHeader, { borderBottomColor: isDark ? '#333' : '#e0e0e0' }]}>
+          <View style={styles.formHeaderSpacer} />
+          <Text style={[styles.formHeaderTitle, { color: textColor }]}>Add Disc</Text>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={8}
+            style={styles.formHeaderClose}
+          >
+            <FontAwesome name="times" size={20} color={isDark ? '#999' : '#666'} />
+          </Pressable>
+        </View>
       <KeyboardAvoidingView
-        style={[styles.container, dynamicContainerStyle]}
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={100}>
       <ScrollView style={[styles.scrollView, dynamicContainerStyle]} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
@@ -1028,6 +1085,8 @@ export default function AddDiscScreen() {
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
+      </View>
+      )}
 
       {/* istanbul ignore next -- Native camera component requires device testing */}
       <CameraWithOverlay
@@ -1097,6 +1156,30 @@ export default function AddDiscScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  formHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  formHeaderSpacer: {
+    width: 36,
+  },
+  formHeaderTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  formHeaderClose: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

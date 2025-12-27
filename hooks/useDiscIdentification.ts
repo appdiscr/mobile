@@ -14,6 +14,7 @@ export interface DiscIdentification {
     fade: number | null;
   } | null;
   plastic: string | null;
+  color: string | null;
 }
 
 export interface CatalogMatch {
@@ -33,6 +34,7 @@ export interface IdentificationResult {
   catalog_match: CatalogMatch | null;
   similar_matches: CatalogMatch[];
   processing_time_ms: number;
+  log_id: string | null;
 }
 
 interface UseDiscIdentificationResult {
@@ -98,7 +100,8 @@ export function useDiscIdentification(): UseDiscIdentificationResult {
       const data = await apiResponse.json();
 
       if (!apiResponse.ok) {
-        const errorMessage = data.error || 'Failed to identify disc';
+        const errorMessage = data.details || data.error || 'Failed to identify disc';
+        console.error('AI identification API error:', apiResponse.status, errorMessage, data);
         setError(errorMessage);
         return null;
       }
@@ -108,6 +111,7 @@ export function useDiscIdentification(): UseDiscIdentificationResult {
         catalog_match: data.catalog_match,
         similar_matches: data.similar_matches || [],
         processing_time_ms: data.processing_time_ms,
+        log_id: data.log_id || null,
       };
 
       setResult(identificationResult);

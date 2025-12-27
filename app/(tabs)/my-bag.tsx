@@ -56,6 +56,7 @@ interface Disc {
   active_recovery?: ActiveRecovery | null;
   was_surrendered?: boolean;
   surrendered_at?: string | null;
+  ai_identification_log_id?: string | null;
 }
 
 // Recovery status labels and colors
@@ -222,6 +223,12 @@ export default function MyBagScreen() {
               <View style={[styles.recoveryBadge, styles.surrenderedBadge]}>
                 <FontAwesome name="gift" size={10} color="#fff" />
                 <Text style={styles.recoveryBadgeText}>Surrendered</Text>
+              </View>
+            )}
+            {item.ai_identification_log_id && (
+              <View style={[styles.recoveryBadge, styles.aiBadge]}>
+                <FontAwesome name="magic" size={10} color="#fff" />
+                <Text style={styles.recoveryBadgeText}>AI Identified</Text>
               </View>
             )}
             {item.active_recovery && RECOVERY_STATUS_MAP[item.active_recovery.status] && (
@@ -435,6 +442,9 @@ const styles = StyleSheet.create({
   },
   surrenderedBadge: {
     backgroundColor: '#9B59B6',
+  },
+  aiBadge: {
+    backgroundColor: '#3498DB',
   },
   discDetails: {
     fontSize: 14,

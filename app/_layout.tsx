@@ -168,19 +168,10 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
             name="add-disc"
-            options={({ navigation }) => ({
+            options={{
               presentation: 'modal',
-              title: 'Add Disc',
-              headerRight: () => (
-                <Pressable
-                  onPress={() => navigation.goBack()}
-                  hitSlop={8}
-                  style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <FontAwesome name="times" size={18} color={colorScheme === 'dark' ? '#999' : '#666'} />
-                </Pressable>
-              ),
-            })}
+              headerShown: false,
+            }}
           />
           <Stack.Screen
             name="disc/[id]"

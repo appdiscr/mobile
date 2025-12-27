@@ -79,6 +79,7 @@ interface Disc {
   active_recovery?: ActiveRecovery | null;
   was_surrendered?: boolean;
   surrendered_at?: string | null;
+  ai_identification_log_id?: string | null;
 }
 
 // Color mapping with hex values
@@ -507,6 +508,14 @@ export default function DiscDetailScreen() {
         <RNView style={styles.surrenderedBanner}>
           <FontAwesome name="gift" size={18} color="#fff" />
           <Text style={styles.surrenderedBannerText}>This disc was surrendered to you</Text>
+        </RNView>
+      )}
+
+      {/* AI Identified Banner */}
+      {disc.ai_identification_log_id && (
+        <RNView style={[styles.surrenderedBanner, styles.aiBanner]}>
+          <FontAwesome name="magic" size={18} color="#fff" />
+          <Text style={styles.surrenderedBannerText}>Identified with AI</Text>
         </RNView>
       )}
 
@@ -987,6 +996,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  aiBanner: {
+    backgroundColor: '#3498DB',
   },
   // Scanner styles
   scannerContainer: {
