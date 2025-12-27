@@ -408,11 +408,20 @@ export default function AddDiscScreen() {
     setPhotos([uri]);
 
     // Run AI identification
-    const result = await identify(uri);
-    if (result) {
-      setShowIdentificationResult(true);
-    } else if (identifyError) {
-      Alert.alert('Identification Failed', identifyError, [
+    try {
+      const result = await identify(uri);
+      if (result) {
+        setShowIdentificationResult(true);
+      } else {
+        // identify() returned null, meaning there was an error
+        Alert.alert('Identification Failed', 'Could not identify the disc. Please try again or enter details manually.', [
+          { text: 'Try Again', onPress: startAiPhotoFlow },
+          { text: 'Enter Manually', style: 'cancel' },
+        ]);
+      }
+    } catch (err) {
+      console.error('AI identification error:', err);
+      Alert.alert('Identification Failed', 'An unexpected error occurred. Please try again or enter details manually.', [
         { text: 'Try Again', onPress: startAiPhotoFlow },
         { text: 'Enter Manually', style: 'cancel' },
       ]);
@@ -735,6 +744,8 @@ export default function AddDiscScreen() {
         </View>
       )}
 
+      {/* Only render the form after user selects an entry mode */}
+      {entryMode !== null && (
       <KeyboardAvoidingView
         style={[styles.container, dynamicContainerStyle]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1028,6 +1039,7 @@ export default function AddDiscScreen() {
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
+      )}
 
       {/* istanbul ignore next -- Native camera component requires device testing */}
       <CameraWithOverlay
