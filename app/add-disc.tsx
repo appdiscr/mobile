@@ -12,6 +12,7 @@ import {
   View,
   Dimensions,
   View as RNView,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -30,6 +31,7 @@ import { CatalogDisc } from '@/hooks/useDiscCatalogSearch';
 import { compressImage } from '@/utils/imageCompression';
 import { formatFeeHint } from '@/lib/stripeFees';
 import { handleError } from '@/lib/errorHandler';
+import { useDiscIdentification, IdentificationResult } from '@/hooks/useDiscIdentification';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -99,6 +101,18 @@ export default function AddDiscScreen() {
   const [showCamera, setShowCamera] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState('');
+
+  // Entry mode selection
+  type EntryMode = 'qr' | 'photo-ai' | 'manual' | null;
+  const [entryMode, setEntryMode] = useState<EntryMode>(null);
+  const [showOptionsModal, setShowOptionsModal] = useState(true);
+
+  // AI Identification
+  const { identify, isLoading: isIdentifying, error: identifyError, result: identificationResult, reset: resetIdentification } = useDiscIdentification();
+  const [showAiCamera, setShowAiCamera] = useState(false);
+  const [showAiCropper, setShowAiCropper] = useState(false);
+  const [aiImageUri, setAiImageUri] = useState('');
+  const [showIdentificationResult, setShowIdentificationResult] = useState(false);
 
   // Validation errors
   const [moldError, setMoldError] = useState('');
@@ -352,6 +366,92 @@ export default function AddDiscScreen() {
     ]);
   };
 
+  // Entry mode handlers
+  const handleSelectEntryMode = (mode: EntryMode) => {
+    setEntryMode(mode);
+    setShowOptionsModal(false);
+
+    if (mode === 'qr') {
+      startQrScanning();
+    } else if (mode === 'photo-ai') {
+      startAiPhotoFlow();
+    }
+    // 'manual' just shows the form
+  };
+
+  // AI Photo Flow handlers
+  const startAiPhotoFlow = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert(
+          'Camera Permission Required',
+          'Please grant camera permission to take photos.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+    setShowAiCamera(true);
+  };
+
+  const handleAiPhotoTaken = (uri: string) => {
+    setAiImageUri(uri);
+    setShowAiCropper(true);
+  };
+
+  const handleAiCropComplete = async (uri: string) => {
+    setAiImageUri(uri);
+    setShowAiCropper(false);
+
+    // Also add this photo to the photos array
+    setPhotos([uri]);
+
+    // Run AI identification
+    const result = await identify(uri);
+    if (result) {
+      setShowIdentificationResult(true);
+    } else if (identifyError) {
+      Alert.alert('Identification Failed', identifyError, [
+        { text: 'Try Again', onPress: startAiPhotoFlow },
+        { text: 'Enter Manually', style: 'cancel' },
+      ]);
+    }
+  };
+
+  const applyIdentificationResult = (result: IdentificationResult) => {
+    const { identification, catalog_match } = result;
+
+    // Apply AI identification to form
+    if (identification.manufacturer) {
+      setManufacturer(identification.manufacturer);
+    }
+    if (identification.mold) {
+      setMold(identification.mold);
+      if (moldError) setMoldError('');
+    }
+    if (identification.plastic) {
+      setPlastic(identification.plastic);
+    }
+
+    // If we have a catalog match, use its flight numbers (more reliable)
+    if (catalog_match) {
+      if (catalog_match.category) setCategory(catalog_match.category);
+      if (catalog_match.speed !== null) setSpeed(catalog_match.speed.toString());
+      if (catalog_match.glide !== null) setGlide(catalog_match.glide.toString());
+      if (catalog_match.turn !== null) setTurn(catalog_match.turn.toString());
+      if (catalog_match.fade !== null) setFade(catalog_match.fade.toString());
+    } else if (identification.flight_numbers) {
+      // Fall back to AI-detected flight numbers
+      if (identification.flight_numbers.speed !== null) setSpeed(identification.flight_numbers.speed.toString());
+      if (identification.flight_numbers.glide !== null) setGlide(identification.flight_numbers.glide.toString());
+      if (identification.flight_numbers.turn !== null) setTurn(identification.flight_numbers.turn.toString());
+      if (identification.flight_numbers.fade !== null) setFade(identification.flight_numbers.fade.toString());
+    }
+
+    setShowIdentificationResult(false);
+  };
+
   const handleSave = async () => {
     if (!validateForm()) {
       return;
@@ -483,6 +583,158 @@ export default function AddDiscScreen() {
 
   return (
     <>
+      {/* Entry Mode Options Modal */}
+      <Modal
+        visible={showOptionsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowOptionsModal(false)}>
+        <View style={[styles.optionsModalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+          <View style={[styles.optionsModalContent, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+            <Text style={[styles.optionsModalTitle, { color: textColor }]}>Add a Disc</Text>
+            <Text style={[styles.optionsModalSubtitle, { color: isDark ? '#999' : '#666' }]}>
+              How would you like to add your disc?
+            </Text>
+
+            <Pressable
+              style={[styles.optionCard, { backgroundColor: isDark ? '#252525' : '#f8f8f8', borderColor: isDark ? '#333' : '#e0e0e0' }]}
+              onPress={() => handleSelectEntryMode('qr')}>
+              <View style={[styles.optionIconContainer, { backgroundColor: 'rgba(127, 34, 206, 0.1)' }]}>
+                <FontAwesome name="qrcode" size={28} color={Colors.violet.primary} />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={[styles.optionTitle, { color: textColor }]}>Scan QR Sticker</Text>
+                <Text style={[styles.optionDescription, { color: isDark ? '#999' : '#666' }]}>
+                  Link a Discr sticker to this disc
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={16} color="#999" />
+            </Pressable>
+
+            <Pressable
+              style={[styles.optionCard, { backgroundColor: isDark ? '#252525' : '#f8f8f8', borderColor: isDark ? '#333' : '#e0e0e0' }]}
+              onPress={() => handleSelectEntryMode('photo-ai')}>
+              <View style={[styles.optionIconContainer, { backgroundColor: 'rgba(127, 34, 206, 0.1)' }]}>
+                <FontAwesome name="magic" size={28} color={Colors.violet.primary} />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={[styles.optionTitle, { color: textColor }]}>Photo + AI Identify</Text>
+                <Text style={[styles.optionDescription, { color: isDark ? '#999' : '#666' }]}>
+                  Take a photo and let AI fill in the details
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={16} color="#999" />
+            </Pressable>
+
+            <Pressable
+              style={[styles.optionCard, { backgroundColor: isDark ? '#252525' : '#f8f8f8', borderColor: isDark ? '#333' : '#e0e0e0' }]}
+              onPress={() => handleSelectEntryMode('manual')}>
+              <View style={[styles.optionIconContainer, { backgroundColor: 'rgba(127, 34, 206, 0.1)' }]}>
+                <FontAwesome name="pencil" size={28} color={Colors.violet.primary} />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={[styles.optionTitle, { color: textColor }]}>Manual Entry</Text>
+                <Text style={[styles.optionDescription, { color: isDark ? '#999' : '#666' }]}>
+                  Enter disc details yourself
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={16} color="#999" />
+            </Pressable>
+
+            <Pressable
+              style={styles.optionsCancelButton}
+              onPress={() => router.back()}>
+              <Text style={styles.optionsCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* AI Identification Result Modal */}
+      <Modal
+        visible={showIdentificationResult && identificationResult !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowIdentificationResult(false)}>
+        <View style={[styles.optionsModalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+          <View style={[styles.identificationResultModal, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+            <View style={styles.identificationHeader}>
+              <Text style={[styles.identificationTitle, { color: textColor }]}>Disc Identified!</Text>
+              {identificationResult && (
+                <View style={[styles.confidenceBadge, {
+                  backgroundColor: identificationResult.identification.confidence >= 0.7 ? 'rgba(46, 204, 113, 0.2)' : 'rgba(241, 196, 15, 0.2)'
+                }]}>
+                  <Text style={[styles.confidenceText, {
+                    color: identificationResult.identification.confidence >= 0.7 ? '#2ecc71' : '#f1c40f'
+                  }]}>
+                    {Math.round(identificationResult.identification.confidence * 100)}% confident
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {identificationResult && (
+              <View style={styles.identificationDetails}>
+                {identificationResult.catalog_match ? (
+                  <>
+                    <Text style={[styles.identificationLabel, { color: isDark ? '#999' : '#666' }]}>Found in catalog:</Text>
+                    <Text style={[styles.identificationValue, { color: textColor }]}>
+                      {identificationResult.catalog_match.manufacturer} {identificationResult.catalog_match.mold}
+                    </Text>
+                    {identificationResult.catalog_match.category && (
+                      <Text style={[styles.identificationCategory, { color: isDark ? '#999' : '#666' }]}>
+                        {identificationResult.catalog_match.category}
+                      </Text>
+                    )}
+                    <Text style={[styles.identificationFlightNumbers, { color: Colors.violet.primary }]}>
+                      {identificationResult.catalog_match.speed} | {identificationResult.catalog_match.glide} | {identificationResult.catalog_match.turn} | {identificationResult.catalog_match.fade}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.identificationLabel, { color: isDark ? '#999' : '#666' }]}>AI detected:</Text>
+                    <Text style={[styles.identificationValue, { color: textColor }]}>
+                      {identificationResult.identification.manufacturer || 'Unknown'} {identificationResult.identification.mold || 'Unknown'}
+                    </Text>
+                    {identificationResult.identification.raw_text && (
+                      <Text style={[styles.identificationRawText, { color: isDark ? '#999' : '#666' }]}>
+                        "{identificationResult.identification.raw_text}"
+                      </Text>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
+
+            <View style={styles.identificationButtons}>
+              <Pressable
+                style={[styles.button, styles.buttonSecondary]}
+                onPress={() => setShowIdentificationResult(false)}>
+                <Text style={styles.buttonSecondaryText}>Edit Manually</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.button, styles.buttonPrimary]}
+                onPress={() => identificationResult && applyIdentificationResult(identificationResult)}>
+                <Text style={styles.buttonPrimaryText}>Use This</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* AI Identifying Loading Overlay */}
+      {isIdentifying && (
+        <View style={styles.identifyingOverlay}>
+          <View style={[styles.identifyingContent, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+            <ActivityIndicator size="large" color={Colors.violet.primary} />
+            <Text style={[styles.identifyingText, { color: textColor }]}>Analyzing disc...</Text>
+            <Text style={[styles.identifyingSubtext, { color: isDark ? '#999' : '#666' }]}>
+              AI is identifying your disc
+            </Text>
+          </View>
+        </View>
+      )}
+
       <KeyboardAvoidingView
         style={[styles.container, dynamicContainerStyle]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -790,6 +1042,22 @@ export default function AddDiscScreen() {
         imageUri={selectedImageUri}
         onClose={() => setShowCropper(false)}
         onCropComplete={handleCropComplete}
+      />
+
+      {/* AI Photo Camera */}
+      <CameraWithOverlay
+        visible={showAiCamera}
+        onClose={() => setShowAiCamera(false)}
+        onPhotoTaken={handleAiPhotoTaken}
+        helperText="Center the disc stamp in the circle"
+      />
+
+      {/* AI Photo Cropper */}
+      <ImageCropperWithCircle
+        visible={showAiCropper}
+        imageUri={aiImageUri}
+        onClose={() => setShowAiCropper(false)}
+        onCropComplete={handleAiCropComplete}
       />
 
       {/* istanbul ignore next -- Native camera/QR scanner requires device testing */}
@@ -1170,5 +1438,147 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Options Modal styles
+  optionsModalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  optionsModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+  },
+  optionsModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  optionsModalSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  optionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  optionTextContainer: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  optionDescription: {
+    fontSize: 14,
+  },
+  optionsCancelButton: {
+    marginTop: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  optionsCancelText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  // AI Identification Result Modal styles
+  identificationResultModal: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+  },
+  identificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  identificationTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  confidenceBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  confidenceText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  identificationDetails: {
+    marginBottom: 24,
+  },
+  identificationLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  identificationValue: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  identificationCategory: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  identificationFlightNumbers: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  identificationRawText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  identificationButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  // AI Identifying Overlay styles
+  identifyingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  identifyingContent: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  identifyingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  identifyingSubtext: {
+    fontSize: 14,
+    marginTop: 8,
   },
 });
