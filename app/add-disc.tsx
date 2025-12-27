@@ -414,17 +414,40 @@ export default function AddDiscScreen() {
         setShowIdentificationResult(true);
       } else {
         // identify() returned null, meaning there was an error
-        Alert.alert('Identification Failed', 'Could not identify the disc. Please try again or enter details manually.', [
-          { text: 'Try Again', onPress: startAiPhotoFlow },
-          { text: 'Enter Manually', style: 'cancel' },
-        ]);
+        // Show alert - "Enter Manually" will just dismiss and show the form (which is already rendered)
+        Alert.alert(
+          'Identification Failed',
+          identifyError || 'Could not identify the disc. Please try again or enter details manually.',
+          [
+            { text: 'Try Again', onPress: startAiPhotoFlow },
+            {
+              text: 'Enter Manually',
+              onPress: () => {
+                // Form is already visible since entryMode is 'photo-ai'
+                // Just ensure no modals are blocking it
+                setShowOptionsModal(false);
+                setShowIdentificationResult(false);
+              },
+            },
+          ]
+        );
       }
     } catch (err) {
       console.error('AI identification error:', err);
-      Alert.alert('Identification Failed', 'An unexpected error occurred. Please try again or enter details manually.', [
-        { text: 'Try Again', onPress: startAiPhotoFlow },
-        { text: 'Enter Manually', style: 'cancel' },
-      ]);
+      Alert.alert(
+        'Identification Failed',
+        'An unexpected error occurred. Please try again or enter details manually.',
+        [
+          { text: 'Try Again', onPress: startAiPhotoFlow },
+          {
+            text: 'Enter Manually',
+            onPress: () => {
+              setShowOptionsModal(false);
+              setShowIdentificationResult(false);
+            },
+          },
+        ]
+      );
     }
   };
 
